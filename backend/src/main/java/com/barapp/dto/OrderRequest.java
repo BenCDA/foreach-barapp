@@ -11,5 +11,5 @@ public class OrderRequest {
     @NotNull
     private Long userId;
 
-    private Status status = Status.ORDERED; // valeur par défaut
+    private Status status = Status.COMMANDEE; // valeur par défaut
 }

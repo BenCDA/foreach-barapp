@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 import com.barapp.dto.OrderRequest;
 import com.barapp.dto.OrderResponse;
 import com.barapp.model.Order;
-import static com.barapp.model.Order.Status.ORDERED;
+import static com.barapp.model.Order.Status.COMMANDEE;
 import com.barapp.model.User;
 import com.barapp.repository.OrderRepository;
 import com.barapp.repository.UserRepository;
@@ -38,16 +38,16 @@ public class OrderServiceTest {
         User user = new User(1L, "Ben", "ben@test.com", "1234", User.Role.CLIENT);
         OrderRequest request = new OrderRequest();
         request.setUserId(1L);
-        request.setStatus(ORDERED);
+        request.setStatus(COMMANDEE);  // Correction ici
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(orderRepository.save(any(Order.class)))
-                .thenReturn(new Order(1L, user, LocalDateTime.now(), ORDERED));
+                .thenReturn(new Order(1L, user, LocalDateTime.now(), COMMANDEE));  // Correction ici
 
         OrderResponse response = orderService.create(request);
 
         assertNotNull(response);
         assertEquals(1L, response.getUserId());
-        assertEquals(ORDERED, response.getStatus());
+        assertEquals(COMMANDEE, response.getStatus());
     }
 }

@@ -36,13 +36,26 @@ public class CocktailServiceImpl implements CocktailService {
 
         Cocktail saved = cocktailRepository.save(cocktail);
 
-        return new CocktailResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getImageUrl(), saved.getCategory().getId());
+        // On passe l'objet Category complet ici
+        return new CocktailResponse(
+            saved.getId(),
+            saved.getName(),
+            saved.getDescription(),
+            saved.getImageUrl(),
+            saved.getCategory()
+        );
     }
 
     @Override
     public List<CocktailResponse> getAll() {
         return cocktailRepository.findAll().stream()
-                .map(c -> new CocktailResponse(c.getId(), c.getName(), c.getDescription(), c.getImageUrl(), c.getCategory().getId()))
+                .map(c -> new CocktailResponse(
+                    c.getId(),
+                    c.getName(),
+                    c.getDescription(),
+                    c.getImageUrl(),
+                    c.getCategory() // objet Category complet
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -50,7 +63,14 @@ public class CocktailServiceImpl implements CocktailService {
     public CocktailResponse getById(Long id) {
         Cocktail cocktail = cocktailRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cocktail not found"));
-        return new CocktailResponse(cocktail.getId(), cocktail.getName(), cocktail.getDescription(), cocktail.getImageUrl(), cocktail.getCategory().getId());
+
+        return new CocktailResponse(
+            cocktail.getId(),
+            cocktail.getName(),
+            cocktail.getDescription(),
+            cocktail.getImageUrl(),
+            cocktail.getCategory() // objet Category complet
+        );
     }
 
     @Override

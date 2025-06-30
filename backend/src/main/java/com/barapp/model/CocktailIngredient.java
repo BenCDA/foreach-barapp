@@ -1,27 +1,41 @@
 package com.barapp.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 @Entity
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Table(name = "cocktail_ingredient")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CocktailIngredient {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "id_cocktail")
     private Cocktail cocktail;
 
     @ManyToOne
+    @JoinColumn(name = "id_ingredient")
     private Ingredient ingredient;
 
-    private String quantity; // ex: 5cl
+    @Accessors(fluent = false)
+    @Column(name = "quantite")
+    private String quantity;
+
 }

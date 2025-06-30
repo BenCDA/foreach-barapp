@@ -16,7 +16,6 @@ import com.barapp.dto.CocktailIngredientRequest;
 import com.barapp.dto.CocktailIngredientResponse;
 import com.barapp.service.CocktailIngredientService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,13 +27,18 @@ public class CocktailIngredientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CocktailIngredientResponse create(@RequestBody @Valid CocktailIngredientRequest request) {
+    public CocktailIngredientResponse create(@RequestBody CocktailIngredientRequest request) {
         return cocktailIngredientService.create(request);
     }
 
     @GetMapping
     public List<CocktailIngredientResponse> getAll() {
         return cocktailIngredientService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public CocktailIngredientResponse getById(@PathVariable Long id) {
+        return cocktailIngredientService.getById(id);
     }
 
     @DeleteMapping("/{id}")

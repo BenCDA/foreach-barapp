@@ -40,7 +40,13 @@ public class CocktailIngredientServiceImpl implements CocktailIngredientService 
         ci.setQuantity(request.getQuantity());
 
         CocktailIngredient saved = cocktailIngredientRepository.save(ci);
-        return new CocktailIngredientResponse(saved.getId(), cocktail.getId(), ingredient.getId(), saved.getQuantity());
+
+        return new CocktailIngredientResponse(
+                saved.getId(),
+                saved.getCocktail().getId(),
+                saved.getIngredient().getId(),
+                saved.getQuantity()
+        );
     }
 
     @Override
@@ -50,8 +56,22 @@ public class CocktailIngredientServiceImpl implements CocktailIngredientService 
                         ci.getId(),
                         ci.getCocktail().getId(),
                         ci.getIngredient().getId(),
-                        ci.getQuantity()))
+                        ci.getQuantity()
+                ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public CocktailIngredientResponse getById(Long id) {
+        CocktailIngredient ci = cocktailIngredientRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("CocktailIngredient not found"));
+
+        return new CocktailIngredientResponse(
+                ci.getId(),
+                ci.getCocktail().getId(),
+                ci.getIngredient().getId(),
+                ci.getQuantity()
+        );
     }
 
     @Override

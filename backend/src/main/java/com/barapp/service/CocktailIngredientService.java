@@ -8,5 +8,6 @@ import com.barapp.dto.CocktailIngredientResponse;
 public interface CocktailIngredientService {
     CocktailIngredientResponse create(CocktailIngredientRequest request);
     List<CocktailIngredientResponse> getAll();
+    CocktailIngredientResponse getById(Long id);  // <-- Ajout ici
     void delete(Long id);
 }

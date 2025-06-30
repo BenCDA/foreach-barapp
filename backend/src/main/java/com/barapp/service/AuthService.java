@@ -1,8 +1,11 @@
+// src/main/java/com/barapp/service/AuthService.java
 package com.barapp.service;
 
-import com.barapp.dto.*;
+import com.barapp.dto.LoginRequest;
+import com.barapp.dto.RegisterRequest;
+import com.barapp.dto.UserResponse;
 
 public interface AuthService {
-    LoginResponse login(LoginRequest request);
-    RegisterResponse register(RegisterRequest request);
+    UserResponse register(RegisterRequest request);
+    String        login(LoginRequest   request);
 }

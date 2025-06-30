@@ -1,8 +1,9 @@
 package com.barapp.controller;
 
-import com.barapp.dto.*;
+import com.barapp.dto.LoginRequest;
+import com.barapp.dto.RegisterRequest;
+import com.barapp.dto.UserResponse;
 import com.barapp.service.AuthService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,18 +13,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
     private final AuthService authService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponse register(@RequestBody @Valid RegisterRequest request) {
-        return authService.register(request);
+    public UserResponse register(@RequestBody @Valid RegisterRequest req) {
+        return authService.register(req);
     }
 
     @PostMapping("/login")
-    @ResponseStatus(HttpStatus.OK)
-    public LoginResponse login(@RequestBody @Valid LoginRequest request) {
-        return authService.login(request);
+    public String login(@RequestBody @Valid LoginRequest req) {
+        return authService.login(req);
     }
 }

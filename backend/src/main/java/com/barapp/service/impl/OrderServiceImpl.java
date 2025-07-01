@@ -9,6 +9,7 @@ import com.barapp.dto.OrderRequest;       // ← import correct de l'enum
 import com.barapp.dto.OrderResponse;
 import com.barapp.model.Order.Status;
 import com.barapp.repository.OrderRepository;
+import com.barapp.repository.UserRepository;
 import com.barapp.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,18 @@ import lombok.RequiredArgsConstructor;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository repo;
+    private final UserRepository userRepository;
 
     @Override
     public OrderResponse create(String userEmail, OrderRequest req) {
-        // TODO : implémenter
-        throw new UnsupportedOperationException("Not implemented");
+        var user = userRepository.findByEmail(userEmail)
+                                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+        var order = new com.barapp.model.Order();
+        order.setUser(user);
+        order.setOrderDate(java.time.LocalDateTime.now());
+        order.setStatus(req.getStatus());
+        var saved = repo.save(order);
+        return OrderResponse.fromEntity(saved);
     }
 
     @Override
@@ -42,7 +50,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse updateStatus(Long orderId, OrderRequest req) {
-        // TODO : charger, modifier status (Status.valueOf(req.getStatus())), save, mapper → DTO
-        throw new UnsupportedOperationException("Not implemented");
+        var order = repo.findById(orderId)
+                        .orElseThrow(() -> new IllegalArgumentException("Commande introuvable"));
+        order.setStatus(req.getStatus());
+        var updated = repo.save(order);
+        return OrderResponse.fromEntity(updated);
     }
 }

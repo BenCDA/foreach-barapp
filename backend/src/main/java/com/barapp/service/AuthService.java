@@ -8,4 +8,6 @@ import com.barapp.dto.UserResponse;
 public interface AuthService {
     UserResponse register(RegisterRequest request);
     String        login(LoginRequest   request);
+    UserResponse getByEmail(String email);
+
 }

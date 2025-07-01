@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -54,4 +55,10 @@ public class AuthServiceImpl implements AuthService {
         throw new BadCredentialsException("Invalid login");
     }
 
+     @Override
+    public UserResponse getByEmail(String email) {
+        User u = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getRole());
+    }
 }

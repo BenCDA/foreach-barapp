@@ -1,67 +1,48 @@
 package com.barapp.service.impl;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.barapp.dto.OrderRequest;
+import com.barapp.dto.OrderRequest;       // ← import correct de l'enum
 import com.barapp.dto.OrderResponse;
-import com.barapp.model.Order;
-import com.barapp.model.User;
+import com.barapp.model.Order.Status;
 import com.barapp.repository.OrderRepository;
-import com.barapp.repository.UserRepository;
 import com.barapp.service.OrderService;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
+    private final OrderRepository repo;
 
     @Override
-    public OrderResponse create(OrderRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        Order order = new Order();
-        order.setUser(user);
-        order.setStatus(request.getStatus());
-        order.setOrderDate(LocalDateTime.now());
-
-        Order saved = orderRepository.save(order);
-        return new OrderResponse(saved.getId(), user.getId(), saved.getOrderDate(), saved.getStatus());
+    public OrderResponse create(String userEmail, OrderRequest req) {
+        // TODO : implémenter
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
-    public List<OrderResponse> getAll() {
-        return orderRepository.findAll().stream()
-                .map(o -> new OrderResponse(o.getId(), o.getUser().getId(), o.getOrderDate(), o.getStatus()))
-                .collect(Collectors.toList());
+    public List<OrderResponse> getByUserEmail(String email) {
+        return repo.findByUserEmail(email).stream()
+                   .map(OrderResponse::fromEntity)
+                   .collect(Collectors.toList());
     }
 
     @Override
-    public OrderResponse getById(Long id) {
-        Order o = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        return new OrderResponse(o.getId(), o.getUser().getId(), o.getOrderDate(), o.getStatus());
+    public List<OrderResponse> getByStatusNotFinished() {
+        // ici on utilise Order.Status
+        return repo.findByStatusNot(Status.TERMINEE).stream()
+                   .map(OrderResponse::fromEntity)
+                   .collect(Collectors.toList());
     }
 
     @Override
-    public void updateStatus(Long id, OrderRequest request) {
-        Order o = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        o.setStatus(request.getStatus());
-        orderRepository.save(o);
-    }
-
-    @Override
-    public void delete(Long id) {
-        orderRepository.deleteById(id);
+    public OrderResponse updateStatus(Long orderId, OrderRequest req) {
+        // TODO : charger, modifier status (Status.valueOf(req.getStatus())), save, mapper → DTO
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

@@ -1,13 +1,18 @@
 package com.barapp.dto;
 
-import com.barapp.model.OrderCocktail.Step;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter @Setter
+/**
+ * Requête de création d'une ligne de commande de cocktail.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
 public class OrderCocktailRequest {
+
     @NotNull
     private Long orderId;
 
@@ -17,5 +22,10 @@ public class OrderCocktailRequest {
     @NotNull
     private Long sizeId;
 
-    private Step step = Step.PREPARATION;
+    @NotNull
+    private Integer quantity;
+
+    @NotNull
+    private com.barapp.model.OrderCocktail.Step step;
+
 }

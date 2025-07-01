@@ -37,36 +37,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+          // Pas de session ni CSRF pour une API REST stateless
           .csrf(csrf -> csrf.disable())
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+          // Déclaration des accès par rôle
           .authorizeHttpRequests(auth -> auth
-          // ──────────────────── PUBLIC ────────────────────
-          .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-      
-          // ─────────────────── CLIENT ────────────────────
-          .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()   // carte dispo à tous
-          .requestMatchers("/api/cart/**").hasRole("USER")                     // panier / commandes
-          .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("USER")
-          .requestMatchers(HttpMethod.GET,  "/api/orders/**").hasRole("USER")
-      
-          // ────────────────── BARMAKER ──────────────────
-          .requestMatchers("/api/categories/**").hasRole("BARMAN")             // CRUD carte
-          .requestMatchers("/api/cocktails/**").hasRole("BARMAN")
-          .requestMatchers("/api/ingredients/**").hasRole("BARMAN")
-          .requestMatchers("/api/cocktail-ingredients/**").hasRole("BARMAN")
-          .requestMatchers("/api/cocktail-size-prices/**").hasRole("BARMAN")
-          .requestMatchers(HttpMethod.GET,  "/api/orders/to-treat").hasRole("BARMAN")
-          .requestMatchers(HttpMethod.PATCH,"/api/orders/**/status").hasRole("BARMAN")
-          .requestMatchers(HttpMethod.PATCH,"/api/order-cocktails/**/step").hasRole("BARMAN")
-      
-          // ────────────────── AUTHENTIFIÉ ──────────────────
-          .anyRequest().authenticated()
-      )
-      
+              // ───────── PUBLIC ─────────
+              .requestMatchers(HttpMethod.POST,   "/api/auth/**").permitAll()
+              .requestMatchers(HttpMethod.GET,    "/api/cocktails/**").permitAll()
+              .requestMatchers(HttpMethod.GET,    "/api/categories/**").permitAll()
+
+              // ───────── CLIENT (=USER) ─────────
+              .requestMatchers("/api/cart/**").hasRole("USER")
+              .requestMatchers(HttpMethod.POST,   "/api/orders").hasRole("USER")
+              .requestMatchers(HttpMethod.GET,    "/api/orders/**").hasRole("USER")
+
+              // ───────── BARMAN ─────────
+              .requestMatchers("/api/categories/**").hasRole("BARMAN")
+              .requestMatchers("/api/cocktails/**").hasRole("BARMAN")
+              .requestMatchers("/api/ingredients/**").hasRole("BARMAN")
+              .requestMatchers("/api/cocktail-ingredients/**").hasRole("BARMAN")
+              .requestMatchers("/api/cocktail-size-prices/**").hasRole("BARMAN")
+              .requestMatchers(HttpMethod.GET,    "/api/orders/to-treat").hasRole("BARMAN")
+              .requestMatchers(HttpMethod.PATCH,  "/api/orders/**/status").hasRole("BARMAN")
+              .requestMatchers(HttpMethod.PATCH,  "/api/order-cocktails/**/step").hasRole("BARMAN")
+
+              // Toute autre route nécessite authentification
+              .anyRequest().authenticated()
           )
-          // on raccorde notre provider (CustomUserDetailsService + BCrypt)
+
+          // On branche le provider DAO (UserDetails + BCrypt)
           .authenticationProvider(authenticationProvider())
-          // on ajoute le filtre JWT pour toutes les autres requêtes
+
+          // On injecte notre filtre JWT avant UsernamePasswordAuthenticationFilter
           .addFilterBefore(new JwtFilter(jwtTokenProvider),
                            UsernamePasswordAuthenticationFilter.class);
 
@@ -91,9 +95,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Filtre qui extrait le Bearer token, le valide et place l’Authentication dans le contexte.
+     */
     private static class JwtFilter extends OncePerRequestFilter {
         private final JwtTokenProvider provider;
-        public JwtFilter(JwtTokenProvider provider) { this.provider = provider; }
+        public JwtFilter(JwtTokenProvider provider) {
+            this.provider = provider;
+        }
 
         @Override
         protected void doFilterInternal(HttpServletRequest req,

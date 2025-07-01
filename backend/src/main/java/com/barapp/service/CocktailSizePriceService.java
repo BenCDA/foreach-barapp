@@ -8,5 +8,7 @@ import com.barapp.dto.CocktailSizePriceResponse;
 public interface CocktailSizePriceService {
     CocktailSizePriceResponse create(CocktailSizePriceRequest request);
     List<CocktailSizePriceResponse> getAll();
+    CocktailSizePriceResponse getById(Long id);
+    CocktailSizePriceResponse update(Long id, CocktailSizePriceRequest request);
     void delete(Long id);
 }

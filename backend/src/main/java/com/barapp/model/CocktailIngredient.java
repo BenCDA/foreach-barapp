@@ -1,3 +1,4 @@
+// src/main/java/com/barapp/model/CocktailIngredient.java
 package com.barapp.model;
 
 import jakarta.persistence.Column;
@@ -12,30 +13,27 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 @Entity
 @Table(name = "cocktail_ingredient")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class CocktailIngredient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // id_cocktail INTEGER REFERENCES cocktail(id)
     @ManyToOne
-    @JoinColumn(name = "id_cocktail")
+    @JoinColumn(name = "id_cocktail", nullable = false)
     private Cocktail cocktail;
 
+    // id_ingredient INTEGER REFERENCES ingredient(id)
     @ManyToOne
-    @JoinColumn(name = "id_ingredient")
+    @JoinColumn(name = "id_ingredient", nullable = false)
     private Ingredient ingredient;
 
-    @Accessors(fluent = false)
-    @Column(name = "quantite")
+    // quantite VARCHAR(50)
+    @Column(name = "quantite", nullable = false, length = 50)
     private String quantity;
-
 }

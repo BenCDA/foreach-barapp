@@ -9,5 +9,6 @@ public interface IngredientService {
     IngredientResponse create(IngredientRequest request);
     List<IngredientResponse> getAll();
     IngredientResponse getById(Long id);
+    IngredientResponse update(Long id, IngredientRequest request);
     void delete(Long id);
 }

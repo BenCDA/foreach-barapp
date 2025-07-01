@@ -9,5 +9,6 @@ public interface CocktailService {
     CocktailResponse create(CocktailRequest request);
     List<CocktailResponse> getAll();
     CocktailResponse getById(Long id);
+    CocktailResponse update(Long id, CocktailRequest request);
     void delete(Long id);
 }

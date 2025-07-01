@@ -1,14 +1,13 @@
 package com.barapp.service;
 
+import java.util.List;
+
 import com.barapp.dto.OrderRequest;
 import com.barapp.dto.OrderResponse;
 
-import java.util.List;
-
 public interface OrderService {
-    OrderResponse create(OrderRequest request);
-    List<OrderResponse> getAll();
-    OrderResponse getById(Long id);
-    void updateStatus(Long id, OrderRequest request);
-    void delete(Long id);
+    OrderResponse create(String userEmail, OrderRequest request);
+    List<OrderResponse> getByUserEmail(String email);
+    List<OrderResponse> getByStatusNotFinished();
+    OrderResponse updateStatus(Long orderId, OrderRequest request);
 }

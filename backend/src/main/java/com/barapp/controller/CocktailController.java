@@ -1,23 +1,18 @@
 package com.barapp.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.barapp.dto.CocktailRequest;
 import com.barapp.dto.CocktailResponse;
 import com.barapp.service.CocktailService;
 
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cocktails")
@@ -26,14 +21,8 @@ public class CocktailController {
 
     private final CocktailService cocktailService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CocktailResponse create(@RequestBody @Valid CocktailRequest request) {
-        return cocktailService.create(request);
-    }
-
     @GetMapping
-    public List<CocktailResponse> getAll() {
+    public List<CocktailResponse> list() {
         return cocktailService.getAll();
     }
 
@@ -42,7 +31,22 @@ public class CocktailController {
         return cocktailService.getById(id);
     }
 
+    @PostMapping
+    @PreAuthorize("hasRole('BARMAN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CocktailResponse create(@Valid @RequestBody CocktailRequest req) {
+        return cocktailService.create(req);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('BARMAN')")
+    public CocktailResponse update(@PathVariable Long id,
+                                   @Valid @RequestBody CocktailRequest req) {
+        return cocktailService.update(id, req);
+    }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('BARMAN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         cocktailService.delete(id);

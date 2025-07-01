@@ -1,40 +1,78 @@
 package com.barapp.config.security;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-@Configuration @RequiredArgsConstructor
+import java.io.IOException;
+import java.util.List;
+
+@Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    // BCrypt pour encoder les mots de passe
+    private final JwtTokenProvider jwtTokenProvider;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Permet d’injecter AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
 
-    // On autorise /api/auth/** en accès libre, tout le reste nécessite auth
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-          .csrf().disable()
-          .authorizeHttpRequests()
-            .requestMatchers("/api/auth/**").permitAll()
-            .anyRequest().authenticated()
-          .and()
-            .httpBasic();
+          .csrf(csrf -> csrf.disable())
+          .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+          .authorizeHttpRequests(auth -> auth
+              .requestMatchers("/api/auth/**").permitAll()
+              .anyRequest().authenticated()
+          )
+          // on intercale notre filtre JWT avant celui de Spring
+          .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
+    }
+
+    // Filtre qui lit l'en-tête Authorization, valide le JWT et peuple le contexte
+    private static class JwtFilter extends OncePerRequestFilter {
+        private final JwtTokenProvider provider;
+        public JwtFilter(JwtTokenProvider provider) { this.provider = provider; }
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest req,
+                                        HttpServletResponse res,
+                                        FilterChain chain) throws ServletException, IOException {
+            String header = req.getHeader("Authorization");
+            if (header != null && header.startsWith("Bearer ")) {
+                String token = header.substring(7);
+                if (provider.validateToken(token)) {
+                    String username = provider.getUsernameFromJWT(token);
+                    var authToken = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        username, null, List.of()
+                    );
+                    org.springframework.security.core.context.SecurityContextHolder.getContext()
+                        .setAuthentication(authToken);
+                }
+            }
+            chain.doFilter(req, res);
+        }
     }
 }

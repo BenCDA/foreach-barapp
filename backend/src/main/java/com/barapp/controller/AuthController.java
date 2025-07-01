@@ -1,28 +1,29 @@
 package com.barapp.controller;
 
 import com.barapp.dto.LoginRequest;
+import com.barapp.dto.LoginResponse;
 import com.barapp.dto.RegisterRequest;
-import com.barapp.dto.UserResponse;
 import com.barapp.service.AuthService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
 
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse register(@RequestBody @Valid RegisterRequest req) {
-        return authService.register(req);
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
+        String token = authService.login(req);
+        return ResponseEntity.ok(new LoginResponse(token));
     }
 
-    @PostMapping("/login")
-    public String login(@RequestBody @Valid LoginRequest req) {
-        return authService.login(req);
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@RequestBody RegisterRequest req) {
+        authService.register(req);
+        return ResponseEntity.status(201).build();
     }
 }

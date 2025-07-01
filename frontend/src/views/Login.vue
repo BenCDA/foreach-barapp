@@ -51,6 +51,7 @@ export default {
 
         localStorage.setItem('jwt', token);
         this.$router.push('/'); // page d’accueil ou tableau de bord
+        console.log("Vous etes bien connecté", token);
       } catch (e) {
         this.error = e.message;
         console.error("Login failed:", e); // Ajout pour un meilleur débogage

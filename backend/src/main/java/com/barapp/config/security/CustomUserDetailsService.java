@@ -1,30 +1,25 @@
 package com.barapp.config.security;
 
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-
 import com.barapp.model.User;
 import com.barapp.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-    private final UserRepository userRepo;
+
+    private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
-        throws UsernameNotFoundException {
-        User u = userRepo.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        return org.springframework.security.core.userdetails.User
-            .withUsername(u.getEmail())
-            .password(u.getPassword())
-            .authorities("ROLE_" + u.getRole().name()) // ✅ ICI la vraie correction
-            .build();
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email : " + email));
+        return new CustomUserDetails(user);
     }
 }

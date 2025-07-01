@@ -31,8 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService userDetailsService = null;
+    private final JwtTokenProvider jwtTokenProvider = null;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,9 +49,9 @@ public class SecurityConfig {
               .requestMatchers(HttpMethod.GET,    "/api/categories/**").permitAll()
 
               // ───────── CLIENT (=USER) ─────────
-              .requestMatchers("/api/cart/**").hasRole("USER")
-              .requestMatchers(HttpMethod.POST,   "/api/orders").hasRole("USER")
-              .requestMatchers(HttpMethod.GET,    "/api/orders/**").hasRole("USER")
+              .requestMatchers("/api/cart/**").hasRole("CLIENT")
+              .requestMatchers(HttpMethod.POST,   "/api/orders").hasRole("CLIENT")
+              .requestMatchers(HttpMethod.GET,    "/api/orders/**").hasRole("CLIENT")
 
               // ───────── BARMAN ─────────
               .requestMatchers("/api/categories/**").hasRole("BARMAN")

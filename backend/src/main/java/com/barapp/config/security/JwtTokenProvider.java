@@ -6,6 +6,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Component;
 
+import com.barapp.model.User;
+
 import java.util.Date;
 
 @Component
@@ -55,4 +57,20 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    public String generateToken(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 86400000); // 1 jour
+    
+        return Jwts.builder()
+            .setSubject(user.getEmail())
+            .claim("id", user.getId())
+            .claim("name", user.getName())
+            .claim("role", user.getRole().name())
+            .setIssuedAt(now)
+            .setExpiration(expiryDate)
+            .signWith(SignatureAlgorithm.HS256, secretKey)
+            .compact();
+    }
+    
 }

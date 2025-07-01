@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -38,11 +40,29 @@ public class SecurityConfig {
           .csrf(csrf -> csrf.disable())
           .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
           .authorizeHttpRequests(auth -> auth
-              // on autorise explicitement ces deux routes
-              .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-              .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-              // tout le reste nécessite un JWT
-              .anyRequest().authenticated()
+          // ──────────────────── PUBLIC ────────────────────
+          .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+      
+          // ─────────────────── CLIENT ────────────────────
+          .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()   // carte dispo à tous
+          .requestMatchers("/api/cart/**").hasRole("USER")                     // panier / commandes
+          .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("USER")
+          .requestMatchers(HttpMethod.GET,  "/api/orders/**").hasRole("USER")
+      
+          // ────────────────── BARMAKER ──────────────────
+          .requestMatchers("/api/categories/**").hasRole("BARMAN")             // CRUD carte
+          .requestMatchers("/api/cocktails/**").hasRole("BARMAN")
+          .requestMatchers("/api/ingredients/**").hasRole("BARMAN")
+          .requestMatchers("/api/cocktail-ingredients/**").hasRole("BARMAN")
+          .requestMatchers("/api/cocktail-size-prices/**").hasRole("BARMAN")
+          .requestMatchers(HttpMethod.GET,  "/api/orders/to-treat").hasRole("BARMAN")
+          .requestMatchers(HttpMethod.PATCH,"/api/orders/**/status").hasRole("BARMAN")
+          .requestMatchers(HttpMethod.PATCH,"/api/order-cocktails/**/step").hasRole("BARMAN")
+      
+          // ────────────────── AUTHENTIFIÉ ──────────────────
+          .anyRequest().authenticated()
+      )
+      
           )
           // on raccorde notre provider (CustomUserDetailsService + BCrypt)
           .authenticationProvider(authenticationProvider())

@@ -6,6 +6,8 @@ import com.barapp.dto.UserResponse;
 import com.barapp.model.User;
 import com.barapp.repository.UserRepository;
 import com.barapp.service.AuthService;
+import com.barapp.config.security.JwtTokenProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -17,6 +19,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository       userRepository;
     private final PasswordEncoder      passwordEncoder;
     private final AuthenticationManager authManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public UserResponse register(RegisterRequest req) {
@@ -36,7 +39,9 @@ public class AuthServiceImpl implements AuthService {
         Authentication auth = authManager.authenticate(
             new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
         );
-        // pour l'instant on renvoie juste "OK"
-        return auth.isAuthenticated() ? "OK" : "FAIL";
+        if (auth.isAuthenticated()) {
+            return jwtTokenProvider.generateToken(req.getEmail());
+        }
+        throw new BadCredentialsException("Invalid login");
     }
 }

@@ -19,22 +19,33 @@ public class IngredientServiceImpl implements IngredientService {
 
     @Override
     public IngredientResponse create(IngredientRequest req) {
-        throw new UnsupportedOperationException("Not implemented");
+        var ingredient = new com.barapp.model.Ingredient();
+        ingredient.setName(req.getName());
+        var saved = repo.save(ingredient);
+        return new IngredientResponse(saved.getId(), saved.getName());
     }
 
     @Override
     public List<IngredientResponse> getAll() {
-        throw new UnsupportedOperationException("Not implemented");
+        return repo.findAll().stream()
+                   .map(i -> new IngredientResponse(i.getId(), i.getName()))
+                   .toList();
     }
 
     @Override
     public IngredientResponse getById(Long id) {
-        throw new UnsupportedOperationException("Not implemented");
+        var ingredient = repo.findById(id)
+                             .orElseThrow(() -> new IllegalArgumentException("Ingredient introuvable"));
+        return new IngredientResponse(ingredient.getId(), ingredient.getName());
     }
 
     @Override
     public IngredientResponse update(Long id, IngredientRequest req) {
-        throw new UnsupportedOperationException("Not implemented");
+        var ingredient = repo.findById(id)
+                             .orElseThrow(() -> new IllegalArgumentException("Ingredient introuvable"));
+        ingredient.setName(req.getName());
+        var updated = repo.save(ingredient);
+        return new IngredientResponse(updated.getId(), updated.getName());
     }
 
     @Override

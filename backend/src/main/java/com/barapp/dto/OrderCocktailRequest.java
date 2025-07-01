@@ -22,8 +22,6 @@ public class OrderCocktailRequest {
     @NotNull
     private Long sizeId;
 
-    @NotNull
-    private Integer quantity;
 
     @NotNull
     private com.barapp.model.OrderCocktail.Step step;

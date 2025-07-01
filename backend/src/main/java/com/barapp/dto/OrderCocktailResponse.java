@@ -15,7 +15,6 @@ public class OrderCocktailResponse {
     private Long id;
     private Long orderId;
     private Long cocktailId;
-    private Integer quantity;
     private com.barapp.model.OrderCocktail.Step step;
 
     public static OrderCocktailResponse fromEntity(com.barapp.model.OrderCocktail oc) {
@@ -23,7 +22,6 @@ public class OrderCocktailResponse {
         dto.setId(oc.getId());
         dto.setOrderId(oc.getOrder().getId());
         dto.setCocktailId(oc.getCocktail().getId());
-        dto.setQuantity(oc.getQuantity());
         dto.setStep(oc.getStep());
         return dto;
     }

@@ -1,12 +1,17 @@
 package com.barapp.config.security;
 
-import com.barapp.model.User;
-import com.barapp.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-@Service @RequiredArgsConstructor
+import com.barapp.model.User;
+import com.barapp.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepo;
 
@@ -15,10 +20,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         throws UsernameNotFoundException {
         User u = userRepo.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         return org.springframework.security.core.userdetails.User
             .withUsername(u.getEmail())
             .password(u.getPassword())
-            .authorities(u.getRole().name())
+            .authorities("ROLE_" + u.getRole().name()) // ✅ ICI la vraie correction
             .build();
     }
 }

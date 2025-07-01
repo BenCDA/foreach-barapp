@@ -1,26 +1,28 @@
 package com.barapp.config.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.JwtException;
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
 import org.springframework.stereotype.Component;
 
-import com.barapp.model.User;
-
-import java.util.Date;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtTokenProvider {
 
-    // À externaliser en variable d’environnement ou fichier de config
-    private final String JWT_SECRET = "change_this_secret";
+    // Clé générée automatiquement, 512 bits de longueur
+    private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
-    // Durée de validité : 24h
-    private final long JWT_EXPIRATION_MS = 24 * 60 * 60 * 1000;
+    // Durée de validité du token (en ms)
+    private static final long JWT_EXPIRATION_MS = 24 * 60 * 60 * 1000;
 
     /**
-     * Génère un JWT en utilisant l'email (username) en subject.
+     * Génère un JWT pour l'utilisateur identifié par son username (ici, l'email).
      */
     public String generateToken(String username) {
         Date now = new Date();
@@ -30,47 +32,34 @@ public class JwtTokenProvider {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     /**
-     * Récupère le username (email) depuis le token.
+     * Extrait le username (email) depuis le JWT.
      */
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(JWT_SECRET)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
     }
 
     /**
-     * Vérifie la validité du token.
+     * Valide la structure et la signature du JWT.
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(JWT_SECRET).parseClaimsJws(token);
+            Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
-            // Optionnel : loggez l’erreur ici
             return false;
         }
     }
-
-    public String generateToken(User user) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + 86400000); // 1 jour
-    
-        return Jwts.builder()
-            .setSubject(user.getEmail())
-            .claim("id", user.getId())
-            .claim("name", user.getName())
-            .claim("role", user.getRole().name())
-            .setIssuedAt(now)
-            .setExpiration(expiryDate)
-            .signWith(SignatureAlgorithm.HS256, secretKey)
-            .compact();
-    }
-    
 }

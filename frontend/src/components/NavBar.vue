@@ -31,11 +31,11 @@
                 Commandes à traiter
               </router-link>
             </li>
-            <li>
+            <!-- <li>
               <router-link to="/barman/cocktails" class="hover:text-teal-600">
                 Ma carte
               </router-link>
-            </li>
+            </li> -->
           </template>
   
           <li>

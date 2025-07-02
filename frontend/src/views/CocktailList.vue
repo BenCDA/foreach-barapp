@@ -38,17 +38,19 @@
           </p>
           <div class="mt-auto flex space-x-2">
             <router-link
-              :to="`/barman/cocktails/${c.id}/edit`"
-              class="flex-1 text-center py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-            >
-              Modifier
-            </router-link>
-            <button
-              @click="deleteCocktail(c.id)"
-              class="flex-1 text-center py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-            >
-              Supprimer
-            </button>
+  :to="`/barman/cocktails/${c.id}/edit`"
+  class="flex-1 text-center py-2 bg-teal-400 hover:bg-teal-500 text-white font-semibold rounded-lg transition"
+>
+  Modifier
+</router-link>
+
+<button
+  @click="deleteCocktail(c.id)"
+  class="flex-1 text-center py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition"
+>
+  Supprimer
+</button>
+
           </div>
         </div>
       </div>
@@ -105,3 +107,5 @@
   }
   </style>
   
+
+ 

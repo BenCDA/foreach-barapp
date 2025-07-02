@@ -1,10 +1,9 @@
 <!-- src/views/Home.vue -->
 <template>
     <div class="min-h-screen bg-gray-50 p-4">
-      <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-teal-600">Catégories</h1>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- CategoryCard est un composant à créer -->
+      <div class="max-w-7xl mx-auto">
+        <h1 class="text-2xl font-bold text-teal-600 mb-6">Nos catégories</h1>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <CategoryCard
             v-for="cat in categories"
             :key="cat.id"
@@ -23,15 +22,22 @@
   import type { Category } from '../types'
   import CategoryCard from '../components/CategoryCard.vue'
   
-  const router = useRouter()
   const categories = ref<Category[]>([])
+  const router     = useRouter()
   
-  onMounted(async () => {
-    categories.value = await api.get<Category[]>('/categories', {}, true)
-  })
+  async function fetchCategories() {
+    try {
+      const data = await api.get<Category[]>('/categories', {}, true)
+      categories.value = data
+    } catch (err) {
+      console.error('Erreur lors du chargement des catégories :', err)
+    }
+  }
   
   function goToCategory(id: number) {
     router.push(`/categories/${id}`)
   }
+  
+  onMounted(fetchCategories)
   </script>
   

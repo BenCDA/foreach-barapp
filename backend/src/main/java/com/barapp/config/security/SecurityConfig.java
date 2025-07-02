@@ -39,6 +39,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -64,6 +65,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PATCH, "/api/orders/**/status").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/**/step").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.POST,   "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.GET,    "/api/sizes/**").hasAnyAuthority("ROLE_BARMAN","ROLE_CLIENT")
+
                 // AUTH pour le reste
                 .anyRequest().authenticated()
                 )

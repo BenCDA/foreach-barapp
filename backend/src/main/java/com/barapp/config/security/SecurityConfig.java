@@ -3,6 +3,11 @@ package com.barapp.config.security;
 import java.io.IOException;
 import java.util.List;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
@@ -16,8 +21,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,10 +33,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource; 
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.barapp.config.security.CustomUserDetailsService;
+import com.barapp.config.security.JwtTokenProvider;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -44,24 +47,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1) active CORS (pré-flight) 
+            // 1) CORS + CSRF off + stateless
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            // 2) règles d’accès
             .authorizeHttpRequests(auth -> auth
-                // autorise tous les OPTIONS (pré-flight CORS)
+
+                // pré-flight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // PUBLIC
+                // endpoints publics
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/categories/**").permitAll()
 
-                // CLIENT
+                // panier & commande CLIENT
                 .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
                 .requestMatchers("/api/orders/**").hasAuthority("ROLE_CLIENT")
 
-                // BARMAN
+                // GET sizes accessible aux CLIENT et BARMAN
+                .requestMatchers(HttpMethod.GET, "/api/sizes/**")
+                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // autres opérations sizes réservées au BARMAN
+                .requestMatchers(HttpMethod.POST,   "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PUT,    "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH,  "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+
+                // endpoints BARMAN
                 .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers("/api/cocktails/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers("/api/ingredients/**").hasAuthority("ROLE_BARMAN")
@@ -70,15 +85,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,    "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PATCH,  "/api/orders/**/status").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PATCH,  "/api/order-cocktails/**/step").hasAuthority("ROLE_BARMAN")
-                .requestMatchers("/api/sizes/**").hasAuthority("ROLE_BARMAN")
-
-                // pour GET sizes aussi
-                .requestMatchers(HttpMethod.GET, "/api/sizes/**")
-                    .hasAnyAuthority("ROLE_BARMAN","ROLE_CLIENT")
 
                 // le reste, authentifié
                 .anyRequest().authenticated()
             )
+
+            // 3) auth provider + filtre JWT
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(new JwtFilter(jwtTokenProvider),
                              UsernamePasswordAuthenticationFilter.class);
@@ -106,7 +118,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Loggue la validité du token et injecte l’Authentication.
+     * Filtre JWT : extrait et valide le token
      */
     private static class JwtFilter extends OncePerRequestFilter {
         private final JwtTokenProvider provider;
@@ -123,18 +135,11 @@ public class SecurityConfig {
                 if (provider.validateToken(token)) {
                     String email = provider.getEmailFromToken(token);
                     String role  = provider.getRoleFromToken(token);
-                    System.out.println("✅ JWT détecté : " + token);
-                    System.out.println("➡️ Utilisateur : " + email);
-                    System.out.println("➡️ Rôle brut du token : " + role);
                     var auth = new UsernamePasswordAuthenticationToken(
                         email, null, List.of(new SimpleGrantedAuthority(role))
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                } else {
-                    System.out.println("❌ JWT invalide !");
                 }
-            } else {
-                System.out.println("ℹ️ Aucun token Bearer fourni.");
             }
             chain.doFilter(req, res);
         }

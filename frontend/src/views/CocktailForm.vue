@@ -44,8 +44,8 @@
         <div>
           <label class="block mb-2">Prix par taille</label>
           <div class="grid grid-cols-3 gap-4">
-            <div v-for="size in sizes" :key="size.libelle">
-              <label class="block mb-1">{{ size.libelle }}</label>
+            <div v-for="size in sizes" :key="size.label">
+              <label class="block mb-1">{{ size.label }}</label>
               <input
                 v-model.number="form.prices[size.id].prix"
                 type="number" min="0"

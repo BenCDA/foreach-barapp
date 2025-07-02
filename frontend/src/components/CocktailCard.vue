@@ -1,34 +1,30 @@
 <template>
-    <div class="bg-white p-4 rounded-lg shadow flex flex-col">
-      <h3 class="text-xl font-semibold mb-2">{{ cocktail.name }}</h3>
-      <p class="text-gray-600 flex-1">{{ cocktail.description }}</p>
-      <div class="mt-4 space-y-2">
-        <div v-for="size in cocktail.sizes" :key="size.name" class="flex justify-between items-center">
-          <span>{{ size.name }} – {{ size.price }} €</span>
-          <button
-            @click="addToCart(size.name)"
-            class="px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
-          >
-            + Panier
-          </button>
-        </div>
-      </div>
+    <div
+      class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition flex flex-col justify-between"
+    >
+      <img
+        v-if="cocktail.imageUrl"
+        :src="cocktail.imageUrl"
+        alt="cocktail.name"
+        class="w-full h-32 object-cover rounded mb-4"
+      />
+      <h3 class="text-lg font-semibold mb-2">{{ cocktail.name }}</h3>
+      <p class="text-sm text-gray-600 mb-4" v-if="cocktail.description">
+        {{ cocktail.description }}
+      </p>
+      <router-link
+        :to="`/cocktails/${cocktail.id}`"
+        class="mt-auto inline-block w-full text-center py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
+      >
+        Voir le cocktail
+      </router-link>
     </div>
   </template>
   
   <script lang="ts" setup>
-  import { api } from '../services/api'
   import type { Cocktail } from '../types'
   
+  // reçoit en prop un objet Cocktail
   defineProps<{ cocktail: Cocktail }>()
-  
-  async function addToCart(size: string) {
-    try {
-      await api.post('/cart', { cocktailId: cocktail.id, size, quantity: 1 }, {}, true)
-      alert('Ajouté au panier 🎉')
-    } catch (e) {
-      console.error('Échec ajout panier', e)
-    }
-  }
   </script>
   

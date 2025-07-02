@@ -1,14 +1,18 @@
+<!-- src/App.vue -->
 <template>
   <!-- Affiche la page correspondant à la route actuelle -->
   <router-view />
 </template>
 
-<script>
-export default {
+<script lang="ts">
+// On utilise defineComponent pour typer correctement notre composant racine
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'App',
-};
+})
 </script>
 
 <style>
-/* Tu peux ajouter des styles globaux ici si besoin */
+/* Styles globaux éventuels */
 </style>

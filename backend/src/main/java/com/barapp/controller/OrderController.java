@@ -2,12 +2,11 @@ package com.barapp.controller;
 
 import com.barapp.dto.OrderRequest;
 import com.barapp.dto.OrderResponse;
+import com.barapp.dto.StatusRequest;
 import com.barapp.service.OrderService;
 
 import jakarta.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,34 +21,48 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // CLIENT : crée sa commande
+    /** CLIENT : passer une commande */
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponse create(@Valid @RequestBody OrderRequest req,
-                                Authentication auth) {
-        return orderService.create(auth.getName(), req);
+    public OrderResponse createOrder(
+            @Valid @RequestBody OrderRequest request,
+            Authentication auth
+    ) {
+        return orderService.create(auth.getName(), request);
     }
 
-    // CLIENT : liste ses commandes
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('USER')")
-    public List<OrderResponse> myOrders(Authentication auth) {
+    /** CLIENT : lister ses commandes */
+    @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
+    public List<OrderResponse> listMyOrders(Authentication auth) {
         return orderService.getByUserEmail(auth.getName());
     }
 
-    // BARMAN : liste à traiter
+    /** CLIENT : voir le détail d’une commande */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
+    public OrderResponse getMyOrder(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        return orderService.getByIdAndUserEmail(id, auth.getName());
+    }
+
+    /** BARMAN : lister les commandes à traiter */
     @GetMapping("/to-treat")
-    @PreAuthorize("hasRole('BARMAN')")
-    public List<OrderResponse> toTreat() {
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
+    public List<OrderResponse> listToTreat() {
         return orderService.getByStatusNotFinished();
     }
 
-    // BARMAN : change statut global
+    /** BARMAN : mettre à jour le statut global */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('BARMAN')")
-    public OrderResponse updateStatus(@PathVariable Long id,
-                                      @Valid @RequestBody OrderRequest req) {
-        return orderService.updateStatus(id, req);
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
+    public OrderResponse updateOrderStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody StatusRequest request
+    ) {
+        return orderService.updateStatus(id, request);
     }
 }

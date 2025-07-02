@@ -1,7 +1,5 @@
 package com.barapp.dto;
 
-import com.barapp.model.Order.Status;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +7,5 @@ import lombok.Setter;
 @Getter @Setter
 public class OrderRequest {
     @NotNull
-    private Long userId;
-
-    private Status status = Status.COMMANDEE; // valeur par défaut
+    private Long panierId;
 }

@@ -4,10 +4,9 @@ import com.barapp.dto.OrderCocktailRequest;
 import com.barapp.dto.OrderCocktailResponse;
 import com.barapp.service.OrderCocktailService;
 
-import jakarta.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,18 +19,17 @@ public class OrderCocktailController {
 
     private final OrderCocktailService service;
 
-    // CLIENT & BARMAN : voir cocktails d’une commande
     @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasAnyRole('USER','BARMAN')")
-    public List<OrderCocktailResponse> byOrder(@PathVariable Long orderId) {
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_BARMAN')")
+    public List<OrderCocktailResponse> getByOrder(@PathVariable Long orderId) {
         return service.getByOrderId(orderId);
     }
 
-    // BARMAN : avancer l’étape d’un cocktail
     @PatchMapping("/{id}/step")
-    @PreAuthorize("hasRole('BARMAN')")
-    public OrderCocktailResponse updateStep(@PathVariable Long id,
-                                            @Valid @RequestBody OrderCocktailRequest req) {
-        return service.updateStep(id, req);
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
+    public OrderCocktailResponse updateStep(
+            @PathVariable Long id,
+            @RequestBody OrderCocktailRequest request) {
+        return service.updateStep(id, request);
     }
 }

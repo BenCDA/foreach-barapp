@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class OrderCocktailRequest {
+public class StatusRequest {
     @NotBlank
-    private String step;  // PREPARATION, ASSEMBLAGE, DRESSAGE, TERMINE
+    private String statut; // COMMANDEE, EN_PREPARATION, TERMINEE
 }

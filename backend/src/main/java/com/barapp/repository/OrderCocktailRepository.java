@@ -1,13 +1,11 @@
-// src/main/java/com/barapp/repository/OrderCocktailRepository.java
 package com.barapp.repository;
 
+import com.barapp.model.Order;
+import com.barapp.model.OrderCocktail;
+import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.barapp.model.OrderCocktail;
-
 public interface OrderCocktailRepository extends JpaRepository<OrderCocktail, Long> {
-    // cherche tous les “orderCocktail” d’une commande donnée
-    List<OrderCocktail> findByOrderId(Long orderId);
+    // Permet de récupérer toutes les lignes (cocktails) d’une commande
+    List<OrderCocktail> findByOrder(Order order);
 }

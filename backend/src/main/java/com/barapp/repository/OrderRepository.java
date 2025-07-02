@@ -1,15 +1,11 @@
-// src/main/java/com/barapp/repository/OrderRepository.java
 package com.barapp.repository;
 
+import com.barapp.model.Order;
+import com.barapp.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.barapp.model.Order;
-
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    // renvoie toutes les commandes d’un utilisateur
-    List<Order> findByUserEmail(String email);
-    // renvoie toutes les commandes dont le statut n’est pas terminé
-    List<Order> findByStatusNot(Order.Status status);
+    // Permet de récupérer toutes les commandes d’un user
+    List<Order> findByUser(User user);
 }

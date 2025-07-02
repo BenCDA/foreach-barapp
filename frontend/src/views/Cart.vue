@@ -1,51 +1,89 @@
 <template>
-    <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-start py-8 px-4">
-      <h2 class="text-3xl font-bold text-teal-600 mb-6">Votre panier</h2>
-      <div class="w-full max-w-md">
-        <div v-if="items.length">
-          <div v-for="item in items" :key="item.id"
-               class="bg-white p-4 rounded-lg shadow mb-4 flex justify-between">
+    <div class="min-h-screen bg-gray-50 p-6">
+      <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow space-y-6">
+        <h1 class="text-3xl font-bold text-teal-600">Votre panier</h1>
+  
+        <div v-if="loading" class="text-gray-500">Chargement du panier…</div>
+        <div v-else-if="items.length === 0" class="text-gray-700">
+          Votre panier est vide.
+        </div>
+  
+        <div v-else class="space-y-4">
+          <div
+            v-for="item in items"
+            :key="item.id"
+            class="flex justify-between items-center"
+          >
             <div>
-              <h3 class="font-semibold">{{ item.cocktail.name }} ({{ item.size }})</h3>
-              <p>Quantité : {{ item.quantity }}</p>
+              <h2 class="font-semibold">{{ item.cocktail.name }}</h2>
+              <p class="text-sm text-gray-600">
+                Taille {{ item.size.libelle }} × {{ item.quantity }}
+              </p>
             </div>
-            <button @click="remove(item.id)" class="text-red-500 hover:underline">
-              Supprimer
-            </button>
+            <span class="font-medium">{{ item.price }}€</span>
           </div>
-          <button @click="placeOrder"
-                  class="w-full py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition">
-            Passer la commande
+  
+          <div class="flex justify-between font-semibold text-lg">
+            <span>Total</span>
+            <span>{{ total }}€</span>
+          </div>
+  
+          <button
+            @click="placeOrder"
+            class="w-full py-3 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition"
+          >
+            Commander
           </button>
         </div>
-        <p v-else class="text-gray-600 text-center">Votre panier est vide.</p>
       </div>
     </div>
   </template>
   
   <script lang="ts" setup>
-  import { ref, onMounted } from 'vue'
-  import { api } from '../services/api'
-  import type { CartItem } from '../types'
+  import { ref, onMounted, computed } from 'vue'
   import { useRouter } from 'vue-router'
+  import { api } from '../services/api'
   
-  const items  = ref<CartItem[]>([])
+  interface CartItem {
+    id: number
+    quantity: number
+    price: number
+    cocktail: { id: number; name: string }
+    size: { id: number; libelle: string }
+  }
+  
+  const items = ref<CartItem[]>([])
+  const loading = ref(true)
   const router = useRouter()
   
   async function loadCart() {
-    items.value = await api.get<CartItem[]>('/cart', {}, true)
+    try {
+      items.value = await api.get<CartItem[]>('/cart', {}, true)
+    } catch (e) {
+      console.error('Erreur chargement panier', e)
+    } finally {
+      loading.value = false
+    }
   }
   
-  async function remove(id: number) {
-    await api.delete(`/cart/${id}`, {}, true)
-    loadCart()
-  }
+  const total = computed(() =>
+    items.value.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  )
   
   async function placeOrder() {
-    await api.post('/orders', {}, {}, true)
-    router.push('/orders')
+    try {
+      const order: any = await api.post('/orders', {}, {}, true)
+      router.push(`/orders/${order.id}`)
+    } catch (e) {
+      console.error('Erreur création commande', e)
+      alert('Impossible de passer la commande.')
+    }
   }
   
   onMounted(loadCart)
   </script>
+  
+  <style scoped>
+  /* styles éventuels */
+  </style>
   

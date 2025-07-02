@@ -29,6 +29,11 @@ const routes: RouteRecordRaw[] = [
     component: Cocktail,
     meta: { requiresAuth: true, roles: ['ROLE_BARMAN'] }
   },
+  {
+    path: '/barman/cocktails/create',
+    component: () => import('../views/CocktailForm.vue'),
+    meta: { requiresAuth: true, roles: ['ROLE_BARMAN'] }
+  },
   // page détail d’un cocktail (client)
   {
     path: '/cocktails/:id',

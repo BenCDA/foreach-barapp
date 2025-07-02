@@ -1,84 +1,100 @@
 <template>
-    <div class="min-h-screen bg-gray-50 p-4 flex flex-col items-center">
-      <h1 class="text-3xl font-bold mb-6 text-teal-600">Ma carte</h1>
-      <button @click="goToCreate" class="mb-6 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition">
-        + Ajouter un cocktail
-      </button>
+    <div class="min-h-screen bg-gray-50 p-6">
+      <div v-if="loading" class="text-gray-500">Chargement du cocktail…</div>
+      <div v-else class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow">
+        <img
+          v-if="cocktail.imageUrl"
+          :src="cocktail.imageUrl"
+          :alt="cocktail.nom"
+          class="w-full h-64 object-cover rounded mb-6"
+        />
+        <h1 class="text-3xl font-bold mb-4">{{ cocktail.nom }}</h1>
+        <p class="text-gray-700 mb-4">{{ cocktail.description }}</p>
   
-      <div v-if="loading" class="text-gray-500">Chargement…</div>
-      <div v-else-if="cocktails.length === 0" class="text-red-500">Aucun cocktail trouvé.</div>
-      <div
-        v-else
-        class="grid gap-6 w-full max-w-6xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        <div v-for="c in cocktails" :key="c.id" class="bg-white rounded shadow p-4 flex flex-col">
-          <img :src="c.imageUrl" alt="" class="w-full h-40 object-cover rounded" />
-          <h2 class="text-xl font-semibold mt-2">{{ c.name }}</h2>
-          <p class="text-gray-600 text-sm line-clamp-3">{{ c.description }}</p>
-          <div class="mt-auto flex gap-2 justify-end">
-            <router-link
-              :to="`/barman/cocktails/${c.id}/edit`"
-              class="px-3 py-1 bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition text-sm"
+        <div v-if="cocktail.ingredients.length" class="mb-4">
+          <h2 class="font-semibold mb-2">Ingrédients :</h2>
+          <ul class="list-disc list-inside">
+            <li v-for="ing in cocktail.ingredients" :key="ing.nom">
+              {{ ing.nom }} – {{ ing.quantite }}
+            </li>
+          </ul>
+        </div>
+  
+        <div v-if="prices.length" class="mb-6">
+          <h2 class="font-semibold mb-2">Choisissez une taille :</h2>
+          <div class="flex gap-4">
+            <label
+              v-for="p in prices"
+              :key="p.id"
+              class="flex-1 flex items-center gap-2 border rounded px-4 py-2 cursor-pointer"
+              :class="{ 'border-teal-600 bg-teal-100': selectedSize === p.id }"
             >
-              Modifier
-            </router-link>
-            <button
-              @click="deleteCocktail(c.id)"
-              class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
-            >
-              Supprimer
-            </button>
+              <input
+                type="radio"
+                name="size"
+                :value="p.id"
+                v-model="selectedSize"
+                class="form-radio"
+              />
+              <span>{{ p.libelle }} – {{ p.prix }} €</span>
+            </label>
           </div>
         </div>
+  
+        <button
+          @click="addToCart"
+          :disabled="!selectedSize"
+          class="w-full py-3 bg-teal-600 text-white font-semibold rounded hover:bg-teal-700 transition disabled:opacity-50"
+        >
+          Ajouter au panier
+        </button>
       </div>
-    </div>
-  </template>
+    </template>
   
   <script lang="ts" setup>
-  import { ref, onMounted } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { ref, onMounted, computed } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
   import { api } from '../services/api'
+  import type { CocktailDetail, SizePrice } from '../types'
   
-  const cocktails = ref<Array<any>>([])
-  const loading = ref(true)
-  const router = useRouter()
+  const route        = useRoute()
+  const router       = useRouter()
+  const cocktailId   = Number(route.params.id)
+  const cocktail     = ref<CocktailDetail>({
+    id: 0, nom: '', imageUrl: '', description: '',
+    ingredients: [], prices: []
+  })
+  const loading      = ref(true)
+  const selectedSize = ref<number|null>(null)
   
-  async function fetchCocktails() {
-    loading.value = true
+  // On récupère d'abord le cocktail detail, incluant ses prix depuis l'API
+  onMounted(async () => {
     try {
-      cocktails.value = await api.get('/cocktails', {}, true)
+      const data = await api.get<CocktailDetail>(`/cocktails/${cocktailId}`, {}, true)
+      cocktail.value = data
     } catch (e) {
-      console.error('Erreur chargement cocktails:', e)
+      console.error('Erreur chargement cocktail', e)
     } finally {
       loading.value = false
     }
-  }
+  })
   
-  onMounted(fetchCocktails)
+  // on expose directement les prix dans le template
+  const prices = computed<SizePrice[]>(() => cocktail.value.prices)
   
-  function goToCreate() {
-    router.push('/barman/cocktails/create')
-  }
-  
-  async function deleteCocktail(id: number) {
-    if (confirm('Confirmez-vous la suppression de ce cocktail ?')) {
-      try {
-        await api.delete(`/cocktails/${id}`, {}, true)
-        cocktails.value = cocktails.value.filter(c => c.id !== id)
-      } catch (e) {
-        alert('Erreur lors de la suppression du cocktail.')
-        console.error('Erreur suppression cocktail:', e)
-      }
+  async function addToCart() {
+    if (!selectedSize.value) return
+    try {
+      await api.post('/cart/add', {
+        cocktailId,
+        sizeId: selectedSize.value,
+        quantity: 1
+      }, {}, true)
+      router.push('/cart')
+    } catch (e) {
+      console.error('Erreur ajout au panier', e)
+      alert('Impossible d’ajouter au panier.')
     }
   }
   </script>
-  
-  <style scoped>
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    -webkit-line-clamp: 3;
-  }
-  </style>
   

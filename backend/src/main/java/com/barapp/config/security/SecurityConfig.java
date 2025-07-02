@@ -47,56 +47,55 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1) CORS + CSRF off + stateless
+                // 1) CORS + CSRF off + Stateless
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 2) règles d’accès
+                // 2) Règles d’accès
                 .authorizeHttpRequests(auth -> auth
-                // pré-flight
+                // Pré-flight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // endpoints publics
+                // Endpoints publics
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                // **Commandes CLIENT** (login client requis)
+                .requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
+                // Commandes CLIENT
                 .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
                 .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAuthority("ROLE_CLIENT")
-                // **Panier CLIENT**
+                // Panier CLIENT
                 .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
-                // GET sizes accessible aux CLIENT et BARMAN
+                // Tailles accessibles aux CLIENT et BARMAN
                 .requestMatchers(HttpMethod.GET, "/api/sizes/**")
                 .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
-                // autres opérations sizes réservées au BARMAN
+                // Opérations sizes réservées au BARMAN
                 .requestMatchers(HttpMethod.POST, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PUT, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.PATCH, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                // endpoints BARMAN
-              // endpoints BARMAN
-.requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.POST, "/api/cocktails").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
-.requestMatchers(HttpMethod.PUT, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.PATCH, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-
-.requestMatchers("/api/ingredients/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.DELETE, "/api/cocktail-ingredients/by-cocktail/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.GET, "/api/cocktail-ingredients/by-cocktail/**").hasAuthority("ROLE_BARMAN")
-
-.requestMatchers(HttpMethod.POST, "/api/cocktail-size-prices", "/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.GET, "/api/cocktail-size-prices/by-cocktail/**").hasAuthority("ROLE_BARMAN")
-
-.requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
-.requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
-
-                // le reste, authentifié
+                // Endpoints BARMAN sur cocktails
+                .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.POST, "/api/cocktails").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PUT, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                // Lecture ingrédients pour un cocktail (CLIENT & BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/cocktail-ingredients/by-cocktail/**")
+                .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // CRUD ingrédients (BARMAN)
+                .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
+                // Lecture prix pour un cocktail (CLIENT & BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/cocktail-size-prices/by-cocktail/**")
+                .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // CRUD prix (BARMAN)
+                .requestMatchers("/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
+                // Commandes à traiter / mise à jour (BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
+                // Tout le reste -> authentifié
                 .anyRequest().authenticated()
                 )
-                // 3) auth provider + filtre JWT
+                // 3) Provider + filtre JWT
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
@@ -106,15 +105,14 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        var provider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg)
-            throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
 
@@ -124,7 +122,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Filtre JWT : extrait et valide le token
+     * Filtre JWT : extrait et valide le token.
      */
     private static class JwtFilter extends OncePerRequestFilter {
 
@@ -160,13 +158,13 @@ public class SecurityConfig {
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        var config = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOriginPattern("*");
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
 
-        var source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }

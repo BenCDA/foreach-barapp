@@ -12,6 +12,7 @@ export interface Category {
   export interface CocktailDetail extends Cocktail {
     description: string
     ingredients: { nom: string; quantite: string }[]
+    prices: SizePrice[]          // on ajoute bien la liste des prix ici
   }
   
   export interface SizePrice {
@@ -22,9 +23,10 @@ export interface Category {
   
   export interface CartItem {
     id: number
-    nom: string
-    taille: string
-    prix: number
+    quantity: number
+    price: number
+    cocktail: { id: number; nom: string }
+    size: { id: number; libelle: string }
   }
   
   export interface OrderSummary {

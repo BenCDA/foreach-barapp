@@ -1,18 +1,23 @@
-<!-- src/components/CategoryCard.vue -->
 <template>
-  <div
-    class="cursor-pointer bg-white rounded-lg shadow p-4 hover:shadow-lg transition text-center"
-    @click="$emit('click')"
-  >
-    <h3 class="text-lg font-semibold text-gray-800">{{ category.name }}</h3>
+  <div class="bg-white p-4 rounded-lg shadow flex flex-col">
+    <!-- ton image, titre, description... -->
+    <img ... />
+    <h3>…</h3>
+    <p>…</p>
+
+    <div class="mt-auto space-y-2">
+      <!-- bouton pour aller sur la fiche détail -->
+      <router-link
+        :to="`/cocktails/${cocktail.id}`"
+        class="w-full py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+      >
+        Voir
+      </router-link>
+    </div>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { defineProps } from 'vue'
-import type { Category } from '../types'
-
-const props = defineProps<{
-  category: Category
-}>()
+<script setup lang="ts">
+import type { Cocktail } from '../types'
+defineProps<{ cocktail: Cocktail }>()
 </script>

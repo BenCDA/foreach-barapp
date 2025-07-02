@@ -1,7 +1,7 @@
+import './index.css'     
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'      // ← plus d’extension .js
-import './index.css'               // Tailwind
+import router from './router'
 
 createApp(App)
   .use(router)

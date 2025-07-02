@@ -60,6 +60,7 @@ async function submitLogin() {
     )
     localStorage.setItem('jwt', token)
     router.push('/')
+    console.log("Connecté !", token)
   } catch (e: any) {
     error.value = e.message || 'Erreur lors de la connexion'
     console.error('Login failed:', e)

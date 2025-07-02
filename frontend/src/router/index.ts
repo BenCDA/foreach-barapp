@@ -40,6 +40,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/CocktailDetail.vue'),
     meta: { requiresAuth: true, roles: ['ROLE_CLIENT'] }
   },
+  {
+    path: '/barman/cocktails/:id/edit',
+    component: () => import('../views/CocktailForm.vue'),
+    meta: { requiresAuth: true, roles: ['ROLE_BARMAN'] }
+  },
   { path: '/cart',            component: Cart,        meta: { requiresAuth: true, roles: [ROLE_CLIENT] } },
   { path: '/orders',          component: Orders,      meta: { requiresAuth: true, roles: [ROLE_CLIENT] } },
   { path: '/dashboard',       component: Dashboard,   meta: { requiresAuth: true, roles: [ROLE_BARMAN] } },

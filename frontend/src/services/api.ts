@@ -23,7 +23,18 @@ async function callApi<T>(
       throw new Error('No authentication token found. Please log in.')
     }
     headers.Authorization = `Bearer ${token}`
+  
+    console.log("🔐 Token utilisé:", token)
   }
+  
+  // Ajout temporaire pour debug complet :
+  console.log("📡 Requête API envoyée :", {
+    url,
+    method: options.method,
+    headers,
+    body: options.body
+  })
+  
 
   const response = await fetch(url, {
     ...options,

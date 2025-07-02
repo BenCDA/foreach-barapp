@@ -81,7 +81,13 @@ public class SecurityConfig {
 
                 // endpoints BARMAN
                 .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers("/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+              ///COCKTAIL  .requestMatchers("/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+              .requestMatchers(HttpMethod.POST,   "/api/cocktails").hasAuthority("ROLE_BARMAN")
+              .requestMatchers(HttpMethod.GET,    "/api/cocktails/**").permitAll()
+              .requestMatchers(HttpMethod.PUT,    "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+              .requestMatchers(HttpMethod.PATCH,  "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+              .requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                
                 .requestMatchers("/api/ingredients/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.POST,   "/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")

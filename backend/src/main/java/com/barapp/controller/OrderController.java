@@ -4,7 +4,6 @@ import com.barapp.dto.OrderRequest;
 import com.barapp.dto.OrderResponse;
 import com.barapp.dto.StatusRequest;
 import com.barapp.service.OrderService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,48 +20,34 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /** CLIENT : passer une commande */
+    // CLIENT : crée sa commande
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_CLIENT')")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponse createOrder(
-            @Valid @RequestBody OrderRequest request,
-            Authentication auth
-    ) {
-        return orderService.create(auth.getName(), request);
+    public OrderResponse createOrder(@Valid @RequestBody OrderRequest req,
+                                     Authentication auth) {
+        return orderService.create(auth.getName(), req);
     }
 
-    /** CLIENT : lister ses commandes */
-    @GetMapping
+    // CLIENT : liste ses commandes
+    @GetMapping("/me")
     @PreAuthorize("hasAuthority('ROLE_CLIENT')")
-    public List<OrderResponse> listMyOrders(Authentication auth) {
+    public List<OrderResponse> myOrders(Authentication auth) {
         return orderService.getByUserEmail(auth.getName());
     }
 
-    /** CLIENT : voir le détail d’une commande */
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_CLIENT')")
-    public OrderResponse getMyOrder(
-            @PathVariable Long id,
-            Authentication auth
-    ) {
-        return orderService.getByIdAndUserEmail(id, auth.getName());
-    }
-
-    /** BARMAN : lister les commandes à traiter */
+    // BARMAN : liste à traiter
     @GetMapping("/to-treat")
     @PreAuthorize("hasAuthority('ROLE_BARMAN')")
-    public List<OrderResponse> listToTreat() {
+    public List<OrderResponse> toTreat() {
         return orderService.getByStatusNotFinished();
     }
 
-    /** BARMAN : mettre à jour le statut global */
+    // BARMAN : change statut global
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('ROLE_BARMAN')")
-    public OrderResponse updateOrderStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody StatusRequest request
-    ) {
-        return orderService.updateStatus(id, request);
+    public OrderResponse updateStatus(@PathVariable Long id,
+                                      @Valid @RequestBody StatusRequest req) {
+        return orderService.updateStatus(id, req);
     }
 }

@@ -63,11 +63,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/categories/**").permitAll()
 
-                // panier & commandes CLIENT
-                .requestMatchers(HttpMethod.POST, "/api/cart/**").hasAuthority("ROLE_CLIENT")
-                .requestMatchers(HttpMethod.GET,  "/api/cart/**").hasAuthority("ROLE_CLIENT")
+                // **Commandes CLIENT** (login client requis)
                 .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
-                .requestMatchers(HttpMethod.GET,  "/api/orders/me").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.GET,  "/api/orders/**").hasAuthority("ROLE_CLIENT")
+
+                // **Panier CLIENT**
+                .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
 
                 // GET sizes accessible aux CLIENT et BARMAN
                 .requestMatchers(HttpMethod.GET, "/api/sizes/**")
@@ -85,8 +86,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.POST,   "/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.GET,    "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/orders/**/status").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/order-cocktails/**/step").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH,  "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH,  "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
 
                 // le reste, authentifié
                 .anyRequest().authenticated()
@@ -120,13 +121,11 @@ public class SecurityConfig {
     }
 
     /**
-     * Filtre JWT : extrait et valide le token, puis injecte l’Authentication.
+     * Filtre JWT : extrait et valide le token
      */
     private static class JwtFilter extends OncePerRequestFilter {
         private final JwtTokenProvider provider;
-        public JwtFilter(JwtTokenProvider provider) {
-            this.provider = provider;
-        }
+        public JwtFilter(JwtTokenProvider provider) { this.provider = provider; }
 
         @Override
         protected void doFilterInternal(HttpServletRequest req,

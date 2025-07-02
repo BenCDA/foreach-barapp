@@ -1,16 +1,23 @@
 <template>
-    <div class="min-h-screen bg-gray-50 py-8 px-4">
-      <h2 class="text-3xl font-bold text-teal-600 mb-6">Détail commande #{{ order?.id }}</h2>
-      <div v-if="order">
-        <p class="mb-4">Statut global : <strong>{{ order.status }}</strong></p>
-        <ul class="space-y-4">
-          <li v-for="ci in order.cocktailItems" :key="ci.id" class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold">{{ ci.cocktail.name }} ({{ ci.size }})</h3>
-            <p>Étape : {{ ci.step }}</p>
-          </li>
-        </ul>
+    <div class="min-h-screen bg-gray-50 p-4 flex flex-col items-center">
+      <h1 class="text-3xl font-bold mb-6 text-teal-600">Détails de la commande</h1>
+  
+      <div v-if="loading" class="text-gray-500">Chargement…</div>
+  
+      <div v-else class="w-full max-w-2xl bg-white rounded-lg shadow p-6 space-y-6">
+        <div v-for="oc in cocktails" :key="oc.id" class="space-y-2">
+          <h2 class="text-xl font-semibold">{{ oc.name }} ({{ oc.size }})</h2>
+          <p>Status : {{ formatStep(oc.step) }}</p>
+          <button
+            @click="advance(oc.id)"
+            :disabled="oc.step === 'DONE'"
+            class="px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition text-sm"
+          >
+            {{ oc.step === 'DONE' ? 'Terminé' : 'Étape suivante' }}
+          </button>
+          <hr />
+        </div>
       </div>
-      <p v-else class="text-gray-600">Chargement…</p>
     </div>
   </template>
   
@@ -18,16 +25,55 @@
   import { ref, onMounted } from 'vue'
   import { useRoute } from 'vue-router'
   import { api } from '../services/api'
-  import type { OrderDetail } from '../types'
   
-  const route    = useRoute()
-  const order    = ref<OrderDetail|null>(null)
-  
-  async function loadDetail() {
-    const id = route.params.id as string
-    order.value = await api.get<OrderDetail>(`/orders/${id}`, {}, true)
+  interface OrderedCocktail {
+    id: number
+    name: string
+    size: string
+    step: string
   }
   
-  onMounted(loadDetail)
+  const route = useRoute()
+  const loading = ref(true)
+  const cocktails = ref<OrderedCocktail[]>([])
+  
+  onMounted(async () => {
+    try {
+      const id = route.params.id
+      cocktails.value = await api.get<OrderedCocktail[]>(`/orders/${id}`, {}, true)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      loading.value = false
+    }
+  })
+  
+  async function advance(ocId: number) {
+    try {
+      const updated = await api.patch(
+        `/order-cocktails/${ocId}/step`,
+        {},
+        {},
+        true
+      )
+      // on recharge
+      cocktails.value = await api.get<OrderedCocktail[]>(
+        `/orders/${route.params.id}`,
+        {},
+        true
+      )
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  
+  function formatStep(s: string) {
+    return {
+      INGREDIENTS: 'Préparation des ingrédients',
+      ASSEMBLY: 'Assemblage',
+      PLATING: 'Dressage',
+      DONE: 'Terminée'
+    }[s] || s
+  }
   </script>
   

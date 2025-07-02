@@ -50,6 +50,15 @@ public class CocktailSizePriceServiceImpl implements CocktailSizePriceService {
                                              csp.getSize().getId(), csp.getPrice());
     }
 
+    // --- NOUVELLE METHODE ---
+    @Override
+    public List<CocktailSizePriceResponse> getByCocktailId(Long cocktailId) {
+        return repo.findByCocktailId(cocktailId).stream()
+                   .map(csp -> new CocktailSizePriceResponse(csp.getId(), csp.getCocktail().getId(),
+                                                            csp.getSize().getId(), csp.getPrice()))
+                   .toList();
+    }
+
     @Override
     public CocktailSizePriceResponse update(Long id, CocktailSizePriceRequest req) {
         var csp = repo.findById(id)

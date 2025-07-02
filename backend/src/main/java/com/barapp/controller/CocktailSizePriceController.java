@@ -31,6 +31,12 @@ public class CocktailSizePriceController {
         return service.getById(id);
     }
 
+    // --- NOUVEAU ENDPOINT ---
+    @GetMapping("/by-cocktail/{cocktailId}")
+    public List<CocktailSizePriceResponse> getByCocktailId(@PathVariable Long cocktailId) {
+        return service.getByCocktailId(cocktailId);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ROLE_BARMAN')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -41,7 +47,7 @@ public class CocktailSizePriceController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_BARMAN')")
     public CocktailSizePriceResponse update(@PathVariable Long id,
-                                             @Valid @RequestBody CocktailSizePriceRequest req) {
+                                            @Valid @RequestBody CocktailSizePriceRequest req) {
         return service.update(id, req);
     }
 

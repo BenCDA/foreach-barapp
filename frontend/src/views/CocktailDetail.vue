@@ -1,143 +1,113 @@
 <template>
     <div class="min-h-screen bg-gray-50 p-6">
-      <div v-if="loading" class="text-center py-20 text-gray-500">
-        Chargement…
-      </div>
-      <div v-else class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow space-y-6">
-  
-        <!-- IMAGE -->
-        <img
-          v-if="cocktail?.imageUrl"
-          :src="cocktail.imageUrl"
-          :alt="cocktail.name"
-          class="w-full h-64 object-cover rounded"
-        />
-  
-        <!-- NOM / DESCRIPTION -->
-        <h1 class="text-3xl font-bold">{{ cocktail.name }}</h1>
-        <p class="text-gray-700">{{ cocktail.description }}</p>
-  
-        <!-- INGRÉDIENTS -->
-        <div v-if="ingredients.length" class="space-y-2">
-          <h2 class="font-semibold">Ingrédients :</h2>
-          <ul class="list-disc list-inside text-gray-600">
-            <li v-for="ing in ingredients" :key="ing.id">
-              {{ ing.ingredient.name }} – {{ ing.quantite }}
-            </li>
-          </ul>
+        <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow space-y-6">
+            <img v-if="cocktail" :src="cocktail.imageUrl" :alt="cocktail.name"
+                class="w-full max-h-96 object-cover rounded" />
+
+            <h1 class="text-3xl font-bold mt-4">{{ cocktail?.name }}</h1>
+            <p class="text-gray-600 mb-4">{{ cocktail?.description }}</p>
+
+            <div v-if="sizePrices.length > 0" class="mb-6">
+                <label class="font-semibold mb-2 block">Choisissez une taille :</label>
+                <div class="flex gap-4">
+                    <label v-for="sp in sizePrices" :key="sp.sizeId" class="flex items-center cursor-pointer">
+                        <input type="radio" :value="sp.sizeId" v-model="selectedSizeId" class="mr-2" />
+                        <span class="font-medium">{{ sp.sizeLabel }}</span>
+                        <span class="ml-2 text-gray-500">{{ sp.price }} €</span>
+                    </label>
+                </div>
+            </div>
+
+            <button :disabled="!selectedSizeId || loading" @click="addToCart"
+                class="w-full py-3 bg-teal-400 hover:bg-teal-500 text-white font-semibold rounded-lg transition">
+                Ajouter au panier
+                <span v-if="currentPrice">({{ currentPrice }} €)</span>
+            </button>
+
+            <div v-if="successMsg" class="mt-3 text-green-600 text-center font-medium">
+                {{ successMsg }}
+            </div>
+            <div v-if="errorMsg" class="mt-3 text-red-600 text-center font-medium">
+                {{ errorMsg }}
+            </div>
         </div>
-  
-        <!-- TAILLES + PRIX -->
-        <div class="space-y-2">
-          <h2 class="font-semibold">Choisissez une taille :</h2>
-          <div class="flex flex-wrap gap-6">
-            <label
-              v-for="s in sizes"
-              :key="s.id"
-              class="flex items-center space-x-2 cursor-pointer"
-            >
-              <input
-                type="radio"
-                name="size"
-                :value="s.id"
-                v-model="selectedSize"
-                class="form-radio h-5 w-5 text-teal-600"
-                :disabled="pricesMap[s.id] == null"
-              />
-              <span class="select-none">
-                {{ s.libelle }}
-                <span v-if="pricesMap[s.id] != null">
-                  — {{ pricesMap[s.id] }} €
-                </span>
-                <span v-else class="text-gray-400">(non dispo)</span>
-              </span>
-            </label>
-          </div>
-        </div>
-  
-        <!-- BOUTON AJOUT -->
-        <button
-          @click="addToCart"
-          :disabled="selectedSize === null"
-          class="w-full py-3 bg-teal-600 text-white font-semibold rounded
-                 hover:bg-teal-700 transition disabled:opacity-50"
-        >
-          Ajouter au panier
-        </button>
-      </div>
     </div>
-  </template>
+</template>
   
-  <script lang="ts" setup>
-  import { ref, onMounted } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import { api } from '../services/api'
-  import type {
-    Cocktail,
-    Ingredient,
-    SizePrice,
-    Size
-  } from '../types'
-  
-  const route        = useRoute()
-  const router       = useRouter()
-  const cocktailId   = Number(route.params.id)
-  
-  const loading      = ref(true)
-  const cocktail     = ref<Cocktail | null>(null)
-  const ingredients  = ref<Ingredient[]>([])
-  const sizes        = ref<Size[]>([])
-  const pricesMap    = ref<Record<number, number|null>>({})
-  
-  // radio sélectionnée
-  const selectedSize = ref<number|null>(null)
-  
-  onMounted(async () => {
+<script lang="ts" setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { api } from '../services/api'
+
+interface Cocktail {
+    id: number
+    name: string
+    description: string
+    imageUrl: string
+}
+
+interface SizePrice {
+    id: number
+    cocktailId: number
+    sizeId: number
+    sizeLabel: string // ou libelle selon backend, adapte si besoin
+    price: number
+}
+
+const route = useRoute()
+const cocktailId = Number(route.params.id)
+
+const cocktail = ref<Cocktail | null>(null)
+const sizePrices = ref<SizePrice[]>([])
+const selectedSizeId = ref<number | null>(null)
+const loading = ref(false)
+const successMsg = ref('')
+const errorMsg = ref('')
+
+const currentPrice = computed(() => {
+    const sp = sizePrices.value.find((sp) => sp.sizeId === selectedSizeId.value)
+    return sp?.price || ''
+})
+
+async function loadData() {
+    // Charger les infos cocktail
     try {
-      // 1) données de base
-      cocktail.value = await api.get<Cocktail>(
-        `/cocktails/${cocktailId}`, {}, true
-      )
-  
-      // 2) ingrédients
-      ingredients.value = await api.get<Ingredient[]>(
-        `/cocktail-ingredients/by-cocktail/${cocktailId}`,
-        {}, true
-      )
-  
-      // 3) toutes les tailles (S, M, L)
-      sizes.value = await api.get<Size[]>('/sizes', {}, true)
-  
-      // 4) prix existants
-      const sp = await api.get<SizePrice[]>(
-        `/cocktail-size-prices/by-cocktail/${cocktailId}`,
-        {}, true
-      )
-  
-      // construire map taille→prix
-      pricesMap.value = {}
-      sizes.value.forEach(s => pricesMap.value[s.id] = null)
-      sp.forEach(p => { pricesMap.value[p.taille.id] = p.prix })
+        cocktail.value = await api.get<Cocktail>(`/cocktails/${cocktailId}`)
     } catch (e) {
-      console.error('CocktailDetail error', e)
-    } finally {
-      loading.value = false
+        errorMsg.value = "Erreur chargement du cocktail"
+        return
     }
-  })
-  
-  async function addToCart() {
-    if (selectedSize.value === null) return
+    // Charger les tailles/prix disponibles
     try {
-      await api.post(
-        '/cart/add',
-        { cocktailId, sizeId: selectedSize.value, quantity: 1 },
-        {}, true
-      )
-      router.push('/cart')
-    } catch (err) {
-      console.error('Ajout panier erreur', err)
-      alert('Impossible d’ajouter au panier.')
+        const prices = await api.get<SizePrice[]>(
+            `/cocktail-size-prices/by-cocktail/${cocktailId}`, {}, true
+        )
+        sizePrices.value = prices
+        if (prices.length) selectedSizeId.value = prices[0].sizeId
+    } catch (e) {
+        errorMsg.value = "Erreur chargement des tailles/prix"
     }
-  }
-  </script>
+}
+onMounted(loadData)
+
+async function addToCart() {
+    errorMsg.value = ''
+    successMsg.value = ''
+    loading.value = true
+    try {
+        // Tu peux ajouter quantity (ici 1) ou personnaliser
+        await api.post('/cart', {
+            cocktailId: cocktailId,
+            sizeId: selectedSizeId.value,
+            quantity: 1
+        }, {}, true)
+        successMsg.value = "Cocktail ajouté au panier !"
+        // Optionnel : reload panier, rediriger, etc.
+    } catch (e: any) {
+        errorMsg.value = e.message || 'Erreur lors de l\'ajout au panier'
+    } finally {
+        loading.value = false
+    }
+}
+</script>
   

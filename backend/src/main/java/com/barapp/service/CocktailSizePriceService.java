@@ -11,4 +11,7 @@ public interface CocktailSizePriceService {
     CocktailSizePriceResponse getById(Long id);
     CocktailSizePriceResponse update(Long id, CocktailSizePriceRequest request);
     void delete(Long id);
+
+    // --- AJOUT NOUVELLE METHODE ---
+    List<CocktailSizePriceResponse> getByCocktailId(Long cocktailId);
 }

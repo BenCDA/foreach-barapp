@@ -63,9 +63,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/categories/**").permitAll()
 
-                // panier & commande CLIENT
-                .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
-                .requestMatchers("/api/orders/**").hasAuthority("ROLE_CLIENT")
+                // panier & commandes CLIENT
+                .requestMatchers(HttpMethod.POST, "/api/cart/**").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.GET,  "/api/cart/**").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.GET,  "/api/orders/me").hasAuthority("ROLE_CLIENT")
 
                 // GET sizes accessible aux CLIENT et BARMAN
                 .requestMatchers(HttpMethod.GET, "/api/sizes/**")
@@ -118,11 +120,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Filtre JWT : extrait et valide le token
+     * Filtre JWT : extrait et valide le token, puis injecte l’Authentication.
      */
     private static class JwtFilter extends OncePerRequestFilter {
         private final JwtTokenProvider provider;
-        public JwtFilter(JwtTokenProvider provider) { this.provider = provider; }
+        public JwtFilter(JwtTokenProvider provider) {
+            this.provider = provider;
+        }
 
         @Override
         protected void doFilterInternal(HttpServletRequest req,

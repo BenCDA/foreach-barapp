@@ -96,7 +96,7 @@ async function addToCart() {
     loading.value = true
     try {
         // Tu peux ajouter quantity (ici 1) ou personnaliser
-        await api.post('/cart', {
+        await api.post('/cart/add', {
             cocktailId: cocktailId,
             sizeId: selectedSizeId.value,
             quantity: 1

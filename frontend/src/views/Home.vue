@@ -4,14 +4,22 @@
         Bienvenue sur Bar'App
       </h1>
       <p class="text-lg text-gray-700 mb-8 text-center max-w-2xl">
-        Découvrez nos catégories de cocktails et plongez dans l’univers de vos boissons préférées !
+        Découvrez nos cocktails et plongez dans vos boissons préférées !
       </p>
-      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <CategoryCard
-          v-for="cat in categories"
-          :key="cat.id"
-          :category="cat"
-          @click="goToCategory(cat.id)"
+  
+      <div v-if="loading" class="text-gray-500">Chargement des cocktails…</div>
+      <div v-else-if="cocktails.length === 0" class="text-red-500">
+        Aucun cocktail disponible pour le moment.
+      </div>
+      <div
+        v-else
+        class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+      >
+        <CocktailCard
+          v-for="c in cocktails"
+          :key="c.id"
+          :cocktail="c"
+          @add-to-cart="addToCart(c.id)"
         />
       </div>
     </div>
@@ -21,24 +29,32 @@
   import { ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { api } from '../services/api'
-  import type { Category } from '../types'
-  import CategoryCard from '../components/CategoryCard.vue'
+  import type { Cocktail } from '../types'
+  import CocktailCard from '../components/CocktailCard.vue'
   
-  const categories = ref<Category[]>([])
-  const router     = useRouter()
+  const cocktails = ref<Cocktail[]>([])
+  const loading = ref(true)
+  const router = useRouter()
   
-  async function fetchCategories() {
+  async function fetchCocktails() {
     try {
-      categories.value = await api.get<Category[]>('/categories', {}, false)
+      cocktails.value = await api.get<Cocktail[]>('/cocktails', {}, false)
     } catch (e) {
-      console.error('Impossible de charger les catégories', e)
+      console.error('Erreur chargement cocktails', e)
+    } finally {
+      loading.value = false
     }
   }
   
-  function goToCategory(id: number) {
-    router.push(`/categories/${id}`)
+  function addToCart(cocktailId: number) {
+    // redirige vers le panier avec ajout automatique ou popup
+    router.push('/cart')
   }
   
-  onMounted(fetchCategories)
+  onMounted(fetchCocktails)
   </script>
+  
+  <style scoped>
+  /* Styles éventuels */
+  </style>
   

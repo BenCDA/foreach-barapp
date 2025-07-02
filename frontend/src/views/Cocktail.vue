@@ -1,85 +1,33 @@
 <template>
     <div class="min-h-screen bg-gray-50 p-4 flex flex-col items-center">
-      <!-- Titre dynamique -->
-      <h1
-        class="text-3xl font-bold mb-6"
-        :class="isBarman ? 'text-teal-600' : 'text-green-600'"
-      >
-        {{ isBarman
-          ? 'Ma carte'
-          : `Cocktails de « ${categoryName} »` }}
-      </h1>
-  
-      <!-- Barman : Bouton d'ajout -->
-      <button
-        v-if="isBarman && cocktails.length > 0"
-        @click="goToCreate"
-        class="mb-6 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
-      >
+      <h1 class="text-3xl font-bold mb-6 text-teal-600">Ma carte</h1>
+      <button @click="goToCreate" class="mb-6 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition">
         + Ajouter un cocktail
       </button>
   
-      <!-- Aucun cocktail trouvé -->
+      <div v-if="loading" class="text-gray-500">Chargement…</div>
+      <div v-else-if="cocktails.length === 0" class="text-red-500">Aucun cocktail trouvé.</div>
       <div
-        v-if="!loading && cocktails.length === 0"
-        class="text-center text-gray-600"
+        v-else
+        class="grid gap-6 w-full max-w-6xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
-        <p class="text-red-500 text-lg mb-4">
-          Aucun cocktail trouvé.
-        </p>
-        <!-- Barman : afficher formulaire -->
-        <button
-          v-if="isBarman"
-          @click="goToCreate"
-          class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
-        >
-          Créer mon premier cocktail
-        </button>
-      </div>
-  
-      <!-- Chargement -->
-      <div v-if="loading" class="text-gray-500 text-center">Chargement…</div>
-  
-      <!-- Grille cocktails -->
-      <div
-        v-else-if="cocktails.length > 0"
-        class="grid gap-6 w-full
-               grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4
-               max-w-6xl"
-      >
-        <div
-          v-for="c in cocktails"
-          :key="c.id"
-          class="bg-white rounded shadow hover:shadow-lg transition overflow-hidden"
-        >
-          <img
-            :src="c.imageUrl"
-            alt=""
-            class="w-full h-40 object-cover"
-          />
-          <div class="p-4 flex flex-col justify-between h-40">
-            <div>
-              <h2 class="text-xl font-semibold mb-1">{{ c.name }}</h2>
-              <p class="text-gray-600 text-sm line-clamp-3">{{ c.description }}</p>
-            </div>
-            <div class="mt-3 flex justify-between items-center">
-              <!-- Client : lien vers le détail -->
-              <router-link
-                v-if="!isBarman"
-                :to="`/cocktails/${c.id}`"
-                class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm"
-              >
-                Voir
-              </router-link>
-              <!-- Barman : lien édition -->
-              <router-link
-                v-if="isBarman"
-                :to="`/barman/cocktails/${c.id}/edit`"
-                class="px-2 py-1 bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition text-sm"
-              >
-                Modifier
-              </router-link>
-            </div>
+        <div v-for="c in cocktails" :key="c.id" class="bg-white rounded shadow p-4 flex flex-col">
+          <img :src="c.imageUrl" alt="" class="w-full h-40 object-cover rounded" />
+          <h2 class="text-xl font-semibold mt-2">{{ c.name }}</h2>
+          <p class="text-gray-600 text-sm line-clamp-3">{{ c.description }}</p>
+          <div class="mt-auto flex gap-2 justify-end">
+            <router-link
+              :to="`/barman/cocktails/${c.id}/edit`"
+              class="px-3 py-1 bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition text-sm"
+            >
+              Modifier
+            </router-link>
+            <button
+              @click="deleteCocktail(c.id)"
+              class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+            >
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -87,53 +35,41 @@
   </template>
   
   <script lang="ts" setup>
-  import { ref, onMounted, computed } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { ref, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
   import { api } from '../services/api'
   
-  interface Cocktail {
-    id: number
-    name: string
-    description: string
-    imageUrl: string
-  }
-  
-  const route = useRoute()
-  const router = useRouter()
+  const cocktails = ref<Array<any>>([])
   const loading = ref(true)
-  const cocktails = ref<Cocktail[]>([])
-  const categoryName = ref<string>('')
+  const router = useRouter()
   
-  // rôle stocké en localStorage
-  const role = localStorage.getItem('role') || ''
-  const isBarman = computed(() => role.includes('ROLE_BARMAN'))
-  
-  onMounted(async () => {
+  async function fetchCocktails() {
+    loading.value = true
     try {
-      if (isBarman.value) {
-        // Barman : tous les cocktails
-        cocktails.value = await api.get<Cocktail[]>('/cocktails', {}, true)
-      } else {
-        // Client : cocktails par catégorie
-        const catId = route.params.id
-        const cat = await api.get<{ id: number; name: string }>(
-          `/categories/${catId}`, {}, false
-        )
-        categoryName.value = cat.name
-  
-        cocktails.value = await api.get<Cocktail[]>(
-          `/cocktails?categoryId=${catId}`, {}, false
-        )
-      }
+      cocktails.value = await api.get('/cocktails', {}, true)
     } catch (e) {
-      console.error(e)
+      console.error('Erreur chargement cocktails:', e)
     } finally {
       loading.value = false
     }
-  })
+  }
+  
+  onMounted(fetchCocktails)
   
   function goToCreate() {
     router.push('/barman/cocktails/create')
+  }
+  
+  async function deleteCocktail(id: number) {
+    if (confirm('Confirmez-vous la suppression de ce cocktail ?')) {
+      try {
+        await api.delete(`/cocktails/${id}`, {}, true)
+        cocktails.value = cocktails.value.filter(c => c.id !== id)
+      } catch (e) {
+        alert('Erreur lors de la suppression du cocktail.')
+        console.error('Erreur suppression cocktail:', e)
+      }
+    }
   }
   </script>
   

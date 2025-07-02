@@ -1,21 +1,17 @@
 <template>
     <nav class="bg-white shadow py-4">
       <div class="container mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 space-y-4 sm:space-y-0">
-        <!-- Logo -->
         <router-link to="/" class="text-2xl font-bold text-teal-600">
           Bar’App
         </router-link>
   
-        <!-- Liens -->
-        <ul class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0">
-          <!-- Accueil -->
+        <ul v-if="isAuthenticated" class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0">
           <li>
             <router-link to="/" class="hover:text-teal-600">
               Accueil
             </router-link>
           </li>
   
-          <!-- CLIENT only -->
           <template v-if="role === 'ROLE_CLIENT'">
             <li>
               <router-link to="/cart" class="hover:text-teal-600">
@@ -29,7 +25,6 @@
             </li>
           </template>
   
-          <!-- BARMAN only -->
           <template v-else-if="role === 'ROLE_BARMAN'">
             <li>
               <router-link to="/dashboard" class="hover:text-teal-600">
@@ -43,8 +38,7 @@
             </li>
           </template>
   
-          <!-- Déconnexion -->
-          <li v-if="role">
+          <li>
             <button @click="logout" class="hover:text-red-500">
               Déconnexion
             </button>
@@ -55,15 +49,28 @@
   </template>
   
   <script lang="ts" setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { computed, ref, watch } from 'vue'
+  import { useRouter, useRoute } from 'vue-router'
   
   const router = useRouter()
+  const route = useRoute()
+  
   const role = ref<string | null>(localStorage.getItem('role'))
+  
+  // Surveillance des changements de route pour mettre à jour automatiquement le rôle
+  watch(
+    () => route.path,
+    () => {
+      role.value = localStorage.getItem('role')
+    }
+  )
+  
+  const isAuthenticated = computed(() => !!role.value && !['/login', '/register'].includes(route.path))
   
   function logout() {
     localStorage.removeItem('jwt')
     localStorage.removeItem('role')
+    role.value = null // force une actualisation immédiate
     router.push('/login')
   }
   </script>

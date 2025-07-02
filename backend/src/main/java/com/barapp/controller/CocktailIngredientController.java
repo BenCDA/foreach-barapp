@@ -32,21 +32,21 @@ public class CocktailIngredientController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('BARMAN')")
+    @PreAuthorize("hasRole('ROLE_BARMAN')")
     @ResponseStatus(HttpStatus.CREATED)
     public CocktailIngredientResponse create(@Valid @RequestBody CocktailIngredientRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('BARMAN')")
+    @PreAuthorize("hasRole('ROLE_BARMAN')")
     public CocktailIngredientResponse update(@PathVariable Long id,
                                              @Valid @RequestBody CocktailIngredientRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('BARMAN')")
+    @PreAuthorize("hasRole('ROLE_BARMAN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         service.delete(id);

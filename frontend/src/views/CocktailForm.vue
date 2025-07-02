@@ -5,28 +5,18 @@
       </h1>
   
       <form @submit.prevent="submitCocktail" class="w-full max-w-2xl space-y-6 bg-white p-6 shadow">
-        <!-- Nom -->
-        <div>
-          <label class="block font-medium mb-1">Nom</label>
-          <input v-model="form.name" type="text" class="w-full border px-3 py-2" required />
+        <!-- Nom, description, image, catégorie identiques -->
+        <div><label class="block mb-1">Nom</label>
+          <input v-model="form.name" required class="w-full border px-3 py-2" />
         </div>
-  
-        <!-- Description -->
-        <div>
-          <label class="block font-medium mb-1">Description</label>
-          <textarea v-model="form.description" class="w-full border px-3 py-2" required />
+        <div><label class="block mb-1">Description</label>
+          <textarea v-model="form.description" required class="w-full border px-3 py-2"></textarea>
         </div>
-  
-        <!-- Image -->
-        <div>
-          <label class="block font-medium mb-1">URL de l’image</label>
+        <div><label class="block mb-1">URL de l’image</label>
           <input v-model="form.imageUrl" type="url" class="w-full border px-3 py-2" />
         </div>
-  
-        <!-- Catégorie -->
-        <div>
-          <label class="block font-medium mb-1">Catégorie</label>
-          <select v-model="form.categoryId" class="w-full border px-3 py-2" required>
+        <div><label class="block mb-1">Catégorie</label>
+          <select v-model="form.categoryId" required class="w-full border px-3 py-2">
             <option value="">-- Catégorie --</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
@@ -34,17 +24,17 @@
   
         <!-- Ingrédients -->
         <div>
-          <label class="block font-medium mb-2">Ingrédients</label>
+          <label class="block mb-2">Ingrédients</label>
           <div class="space-y-2">
-            <div v-for="(ing, index) in form.ingredients" :key="index" class="flex items-center gap-2">
+            <div v-for="(ing, i) in form.ingredients" :key="ing.tempId" class="flex gap-2">
               <input v-model="ing.name" list="ingredient-options" placeholder="Ingrédient" class="flex-1 border px-2 py-1" />
               <input v-model="ing.quantity" placeholder="Quantité" class="flex-1 border px-2 py-1" />
-              <button type="button" @click="removeIngredient(index)" class="text-red-500 font-bold">&#x2715;</button>
+              <button type="button" @click="removeIngredient(i)" class="text-red-500">✕</button>
             </div>
             <datalist id="ingredient-options">
-              <option v-for="opt in ingredientSuggestions" :key="opt.id" :value="opt.name" />
+              <option v-for="opt in ingredientSuggestions" :key="opt.id" :value="opt.name"/>
             </datalist>
-            <button type="button" @click="addIngredient" class="text-sm text-teal-600 hover:underline">
+            <button type="button" @click="addIngredient" class="text-teal-600 text-sm hover:underline">
               + Ajouter un ingrédient
             </button>
           </div>
@@ -52,27 +42,23 @@
   
         <!-- Prix par taille -->
         <div>
-          <label class="block font-medium mb-2">Prix par taille</label>
+          <label class="block mb-2">Prix par taille</label>
           <div class="grid grid-cols-3 gap-4">
-            <div v-for="size in ['S', 'M', 'L']" :key="size">
-              <label class="block text-sm font-medium">{{ size }}</label>
+            <div v-for="size in sizes" :key="size.libelle">
+              <label class="block mb-1">{{ size.libelle }}</label>
               <input
-                v-model.number="form.prices[sizeIdMap[size]]"
-                type="number"
-                min="0"
+                v-model.number="form.prices[size.id].prix"
+                type="number" min="0"
+                :placeholder="form.prices[size.id].id ? form.prices[size.id].prix : 'Prix'"
                 class="w-full border px-2 py-1"
-                placeholder="Prix"
               />
             </div>
           </div>
         </div>
   
-        <!-- Bouton -->
-        <div>
-          <button type="submit" class="w-full bg-teal-600 text-white font-semibold py-2 hover:bg-teal-700 transition">
-            {{ isEdit ? 'Modifier' : 'Créer' }} le cocktail
-          </button>
-        </div>
+        <button type="submit" class="w-full bg-teal-600 text-white py-2 font-semibold hover:bg-teal-700">
+          {{ isEdit ? 'Modifier' : 'Créer' }} le cocktail
+        </button>
       </form>
     </div>
   </template>
@@ -84,101 +70,169 @@
   
   const router = useRouter()
   const route = useRoute()
-  const isEdit = computed(() => !!route.params.id)
+  const cocktailId = route.params.id ? Number(route.params.id) : null
+  const isEdit = computed(() => cocktailId !== null)
+  
+  interface IngredientForm {
+    id?: number         // id back ou undefined si nouveau
+    tempId: string      // id unique en front pour v-for
+    name: string
+    quantity: string
+  }
+  interface PriceForm {
+    id?: number         // id back ou undefined si nouveau
+    prix: number | null
+  }
   
   const form = ref({
     name: '',
     description: '',
     imageUrl: '',
     categoryId: null as number | null,
-    ingredients: [{ name: '', quantity: '' }],
-    prices: { 1: null, 2: null, 3: null }
+    ingredients: [] as IngredientForm[],
+    prices: {} as Record<number, PriceForm>
   })
   
   const categories = ref<{ id: number; name: string }[]>([])
   const ingredientSuggestions = ref<{ id: number; name: string }[]>([])
-  const sizeIdMap = { S: 1, M: 2, L: 3 }
+  const sizes = ref<{ id: number; libelle: string }[]>([])
+  
+  // Utilitaire pour générer un tempId unique
+  function uuid() { return crypto.randomUUID() }
   
   onMounted(async () => {
+    // Charger catégories, ingrédients dispo, tailles
     categories.value = await api.get('/categories', {}, true)
     ingredientSuggestions.value = await api.get('/ingredients', {}, true)
+    sizes.value = await api.get('/sizes', {}, true)
+  
+    // Initialiser prix par taille
+    sizes.value.forEach(s => {
+      form.value.prices[s.id] = { id: undefined, prix: null }
+    })
+  
+    if (isEdit.value && cocktailId) {
+      // Charger le cocktail
+      const c = await api.get(`/cocktails/${cocktailId}`, {}, true)
+      form.value.name = c.name
+      form.value.description = c.description
+      form.value.imageUrl = c.imageUrl
+      form.value.categoryId = c.category.id
+  
+      // Charger les ingrédients existants
+      const cis = await api.get(`/cocktail-ingredients/by-cocktail/${cocktailId}`, {}, true)
+      form.value.ingredients = cis.map((ci: any) => ({
+        id: ci.id,
+        tempId: uuid(),
+        name: ci.ingredient.name,
+        quantity: ci.quantite
+      }))
+  
+      // Charger les prix existants
+      const cps = await api.get(`/cocktail-size-prices/by-cocktail/${cocktailId}`, {}, true)
+      cps.forEach((cp: any) => {
+        form.value.prices[cp.taille.id] = {
+          id: cp.id,
+          prix: cp.prix
+        }
+      })
+    } else {
+      // Nouveau cocktail : un seul ingrédient vide
+      form.value.ingredients.push({ tempId: uuid(), name: '', quantity: '' })
+    }
   })
   
   function addIngredient() {
-    form.value.ingredients.push({ name: '', quantity: '' })
+    form.value.ingredients.push({ tempId: uuid(), name: '', quantity: '' })
   }
-  
-  function removeIngredient(index: number) {
-    form.value.ingredients.splice(index, 1)
+  function removeIngredient(i: number) {
+    form.value.ingredients.splice(i, 1)
   }
   
   async function submitCocktail() {
-    let cocktailId: number | null = null
-  
     try {
-      const cocktailPayload = {
+      // 1) create or update cocktail principal
+      const payload = {
         name: form.value.name,
         description: form.value.description,
         imageUrl: form.value.imageUrl,
         categoryId: form.value.categoryId
       }
-  
-      console.log("🎯 Création cocktail:", cocktailPayload)
-  
-      if (isEdit.value) {
-        await api.put(`/cocktails/${route.params.id}`, cocktailPayload, {}, true)
-        cocktailId = Number(route.params.id)
+      let id = cocktailId
+      if (isEdit.value && id) {
+        await api.put(`/cocktails/${id}`, payload, {}, true)
       } else {
-        const created = await api.post('/cocktails', cocktailPayload, {}, true)
-        cocktailId = created.id
+        const created: any = await api.post('/cocktails', payload, {}, true)
+        id = created.id
       }
-    } catch (err) {
-      console.error("❌ Erreur création cocktail :", err)
-      alert("Erreur lors de la création du cocktail.")
-      return
-    }
   
-    try {
+      // 2) Gérer les ingrédients
+      //   - recupère la liste initiale d'ids côté back
+      const existing = new Map<number, IngredientForm>()
+      form.value.ingredients.forEach(ing => {
+        if (ing.id) existing.set(ing.id, ing)
+      })
+  
+      //   a) Mettre à jour ou créer
       for (const ing of form.value.ingredients) {
-        let ingredientId = ingredientSuggestions.value.find(i => i.name.toLowerCase() === ing.name.toLowerCase())?.id
-        if (!ingredientId) {
-          const newIng = await api.post('/ingredients', { name: ing.name }, {}, true)
-          ingredientId = newIng.id
-        }
-  
-        console.log("🧪 Ajout ingredient:", { cocktailId, ingredientId, quantity: ing.quantity })
-  
-        await api.post('/cocktail-ingredients', {
-          cocktailId,
-          ingredientId,
-          quantity: ing.quantity
-        }, {}, true)
-      }
-    } catch (err) {
-      console.error("❌ Erreur ingrédients :", err)
-      alert("Erreur lors de l'ajout des ingrédients.")
-      return
-    }
-  
-    try {
-      for (const sizeId of Object.keys(form.value.prices)) {
-        const prix = form.value.prices[Number(sizeId)]
-        if (prix !== null) {
-          await api.post('/cocktail-size-prices', {
-            cocktailId,
-            sizeId: Number(sizeId),
-            price: prix
+        if (ing.id) {
+          // update si modifié
+          await api.put(`/cocktail-ingredients/${ing.id}`, {
+            cocktailId: id,
+            ingredientId: ingredientSuggestions.value.find(i=>i.name===ing.name)!.id,
+            quantite: ing.quantity
+          }, {}, true)
+          existing.delete(ing.id)
+        } else {
+          // create
+          const ingrObj = ingredientSuggestions.value.find(i=>i.name===ing.name)
+          const ingId = ingrObj ? ingrObj.id :
+            (await api.post('/ingredients', { name: ing.name }, {}, true)).id
+          await api.post('/cocktail-ingredients', {
+            cocktailId: id,
+            ingredientId: ingId,
+            quantite: ing.quantity
           }, {}, true)
         }
       }
-    } catch (err) {
-      console.error("❌ Erreur prix taille :", err)
-      alert("Erreur lors de l'ajout des prix par taille.")
-      return
-    }
+      //   b) Supprimer ceux qui restent dans `existing` (supprimés de l'UI)
+      for (const [oldId] of existing) {
+        await api.delete(`/cocktail-ingredients/${oldId}`, {}, true)
+      }
   
-    router.push('/barman/cocktails')
+      // 3) Gérer les prix par taille (même logique)
+      const existingPrices = new Map<number, PriceForm>()
+      Object.entries(form.value.prices).forEach(([sizeId, p]) => {
+        if (p.id) existingPrices.set(p.id, { ...p })
+      })
+  
+      for (const [sizeIdStr, p] of Object.entries(form.value.prices)) {
+        const sizeId = Number(sizeIdStr)
+        if (p.id) {
+          await api.put(`/cocktail-size-prices/${p.id}`, {
+            cocktailId: id,
+            sizeId,
+            price: p.prix
+          }, {}, true)
+          existingPrices.delete(p.id)
+        } else if (p.prix !== null) {
+          await api.post('/cocktail-size-prices', {
+            cocktailId: id,
+            sizeId,
+            price: p.prix
+          }, {}, true)
+        }
+      }
+      // Supprimer anciens prix non repris
+      for (const oldP of existingPrices.keys()) {
+        await api.delete(`/cocktail-size-prices/${oldP}`, {}, true)
+      }
+  
+      router.push('/barman/cocktails')
+    } catch (e) {
+      console.error('Erreur lors de la soumission', e)
+      alert('Erreur lors de la sauvegarde.')
+    }
   }
   </script>
-  
   

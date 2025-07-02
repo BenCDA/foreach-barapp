@@ -28,9 +28,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import org.springframework.web.cors.CorsConfiguration;                
-import org.springframework.web.cors.CorsConfigurationSource;        
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource; 
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.barapp.config.security.CustomUserDetailsService;
@@ -42,67 +42,64 @@ import com.barapp.config.security.JwtTokenProvider;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final JwtTokenProvider       jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1) CORS + CSRF off + stateless
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // 2) règles d’accès
-            .authorizeHttpRequests(auth -> auth
-
+                // 1) CORS + CSRF off + stateless
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 2) règles d’accès
+                .authorizeHttpRequests(auth -> auth
                 // pré-flight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                 // endpoints publics
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET,  "/api/cocktails/**").permitAll()
-                .requestMatchers(HttpMethod.GET,  "/api/categories/**").permitAll()
-
+                .requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 // **Commandes CLIENT** (login client requis)
                 .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
-                .requestMatchers(HttpMethod.GET,  "/api/orders/**").hasAuthority("ROLE_CLIENT")
-
+                .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAuthority("ROLE_CLIENT")
                 // **Panier CLIENT**
                 .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
-
                 // GET sizes accessible aux CLIENT et BARMAN
                 .requestMatchers(HttpMethod.GET, "/api/sizes/**")
-                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
                 // autres opérations sizes réservées au BARMAN
-                .requestMatchers(HttpMethod.POST,   "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PUT,    "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.POST, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PUT, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
                 .requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-
                 // endpoints BARMAN
-                .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
-              ///COCKTAIL  .requestMatchers("/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-              .requestMatchers(HttpMethod.POST,   "/api/cocktails").hasAuthority("ROLE_BARMAN")
-              .requestMatchers(HttpMethod.GET,    "/api/cocktails/**").permitAll()
-              .requestMatchers(HttpMethod.PUT,    "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-              .requestMatchers(HttpMethod.PATCH,  "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-              .requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-                
-                .requestMatchers("/api/ingredients/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.POST,   "/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.GET,    "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
-                .requestMatchers(HttpMethod.PATCH,  "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
+              // endpoints BARMAN
+.requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.POST, "/api/cocktails").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
+.requestMatchers(HttpMethod.PUT, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.PATCH, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+
+.requestMatchers("/api/ingredients/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.DELETE, "/api/cocktail-ingredients/by-cocktail/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.GET, "/api/cocktail-ingredients/by-cocktail/**").hasAuthority("ROLE_BARMAN")
+
+.requestMatchers(HttpMethod.POST, "/api/cocktail-size-prices", "/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.GET, "/api/cocktail-size-prices/by-cocktail/**").hasAuthority("ROLE_BARMAN")
+
+.requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
+.requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
 
                 // le reste, authentifié
                 .anyRequest().authenticated()
-            )
-
-            // 3) auth provider + filtre JWT
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(new JwtFilter(jwtTokenProvider),
-                             UsernamePasswordAuthenticationFilter.class);
+                )
+                // 3) auth provider + filtre JWT
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(new JwtFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -116,7 +113,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) 
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg)
             throws Exception {
         return cfg.getAuthenticationManager();
     }
@@ -130,22 +127,26 @@ public class SecurityConfig {
      * Filtre JWT : extrait et valide le token
      */
     private static class JwtFilter extends OncePerRequestFilter {
+
         private final JwtTokenProvider provider;
-        public JwtFilter(JwtTokenProvider provider) { this.provider = provider; }
+
+        public JwtFilter(JwtTokenProvider provider) {
+            this.provider = provider;
+        }
 
         @Override
         protected void doFilterInternal(HttpServletRequest req,
-                                        HttpServletResponse res,
-                                        FilterChain chain)
-                                        throws ServletException, IOException {
+                HttpServletResponse res,
+                FilterChain chain)
+                throws ServletException, IOException {
             String header = req.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
                 String token = header.substring(7);
                 if (provider.validateToken(token)) {
                     String email = provider.getEmailFromToken(token);
-                    String role  = provider.getRoleFromToken(token);
+                    String role = provider.getRoleFromToken(token);
                     var auth = new UsernamePasswordAuthenticationToken(
-                        email, null, List.of(new SimpleGrantedAuthority(role))
+                            email, null, List.of(new SimpleGrantedAuthority(role))
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
@@ -161,7 +162,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         var config = new CorsConfiguration();
         config.addAllowedOriginPattern("*");
-        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
 

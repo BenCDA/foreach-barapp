@@ -1,5 +1,6 @@
+<!-- src/views/Login.vue -->
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
     <div class="w-full max-w-md bg-white p-8 rounded-lg shadow">
       <h2 class="text-2xl font-bold mb-6 text-teal-600">Connexion</h2>
       <form @submit.prevent="submitLogin" class="space-y-4">
@@ -39,31 +40,57 @@
   </div>
 </template>
 
+// src/views/Login.vue
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../services/api'
 
-const email = ref<string>('')
+const email    = ref<string>('')
 const password = ref<string>('')
-const error = ref<string | null>(null)
-const router = useRouter()
+const error    = ref<string | null>(null)
+const router   = useRouter()
+
+// helper pour décoder le payload d'un JWT
+function parseJwt<T = any>(token: string): T {
+  const base64Url = token.split('.')[1]
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join('')
+  )
+  return JSON.parse(jsonPayload)
+}
+
+interface LoginResponse { token: string }
 
 async function submitLogin() {
   error.value = null
   try {
-    const { token } = await api.post<{ token: string }>(
+    const { token } = await api.post<LoginResponse>(
       '/auth/login',
       { email: email.value, password: password.value },
       {},
       false
     )
+
+    // 1) on stocke le token
     localStorage.setItem('jwt', token)
+
+    // 2) on décode et extrait le role
+    const { role } = parseJwt<{ role: string }>(token)
+    localStorage.setItem('role', role)
+
+    // 3) debug
+    console.log('Connecté', 'role:', role, 'token:', token)
+
+    // 4) on redirige
     router.push('/')
-    console.log("Connecté !", token)
   } catch (e: any) {
     error.value = e.message || 'Erreur lors de la connexion'
-    console.error('Login failed:', e)
   }
 }
 </script>
+

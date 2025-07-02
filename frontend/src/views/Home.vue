@@ -1,16 +1,18 @@
-<!-- src/views/Home.vue -->
 <template>
-    <div class="min-h-screen bg-gray-50 p-4">
-      <div class="max-w-7xl mx-auto">
-        <h1 class="text-2xl font-bold text-teal-600 mb-6">Nos catégories</h1>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <CategoryCard
-            v-for="cat in categories"
-            :key="cat.id"
-            :category="cat"
-            @click="goToCategory(cat.id)"
-          />
-        </div>
+    <div class="min-h-screen bg-gray-50 flex flex-col items-center py-8 px-4">
+      <h1 class="text-4xl font-bold text-teal-600 mb-2 text-center">
+        Bienvenue sur Bar'App
+      </h1>
+      <p class="text-lg text-gray-700 mb-8 text-center max-w-2xl">
+        Découvrez nos catégories de cocktails et plongez dans l’univers de vos boissons préférées !
+      </p>
+      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <CategoryCard
+          v-for="cat in categories"
+          :key="cat.id"
+          :category="cat"
+          @click="goToCategory(cat.id)"
+        />
       </div>
     </div>
   </template>
@@ -27,10 +29,9 @@
   
   async function fetchCategories() {
     try {
-      const data = await api.get<Category[]>('/categories', {}, true)
-      categories.value = data
-    } catch (err) {
-      console.error('Erreur lors du chargement des catégories :', err)
+      categories.value = await api.get<Category[]>('/categories', {}, false)
+    } catch (e) {
+      console.error('Impossible de charger les catégories', e)
     }
   }
   

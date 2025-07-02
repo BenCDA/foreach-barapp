@@ -1,52 +1,33 @@
-<!-- src/views/OrderDetail.vue -->
 <template>
-    <div class="min-h-screen bg-gray-50 p-4">
-      <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow space-y-4">
-        <h1 class="text-2xl font-bold text-teal-600">Détails commande #{{ order.id }}</h1>
-        <div v-for="c in order.items" :key="c.id" class="flex justify-between">
-          <span>{{ c.nom }} ({{ c.taille }})</span>
-          <span>{{ c.prix }} €</span>
-        </div>
-        <div class="flex justify-between font-semibold">
-          <span>Total</span>
-          <span>{{ order.total }} €</span>
-        </div>
-        <div class="space-x-2">
-          <button
-            class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition"
-            @click="nextStatus"
-            :disabled="order.statut === 'TERMINE'"
-          >
-            Passer à l’étape suivante
-          </button>
-        </div>
+    <div class="min-h-screen bg-gray-50 py-8 px-4">
+      <h2 class="text-3xl font-bold text-teal-600 mb-6">Détail commande #{{ order?.id }}</h2>
+      <div v-if="order">
+        <p class="mb-4">Statut global : <strong>{{ order.status }}</strong></p>
+        <ul class="space-y-4">
+          <li v-for="ci in order.cocktailItems" :key="ci.id" class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold">{{ ci.cocktail.name }} ({{ ci.size }})</h3>
+            <p>Étape : {{ ci.step }}</p>
+          </li>
+        </ul>
       </div>
+      <p v-else class="text-gray-600">Chargement…</p>
     </div>
   </template>
   
   <script lang="ts" setup>
   import { ref, onMounted } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { useRoute } from 'vue-router'
   import { api } from '../services/api'
   import type { OrderDetail } from '../types'
   
-  const route = useRoute()
-  const router = useRouter()
-  const order = ref<OrderDetail>({
-    id: 0,
-    items: [],
-    total: 0,
-    statut: ''
-  })
+  const route    = useRoute()
+  const order    = ref<OrderDetail|null>(null)
   
-  onMounted(async () => {
-    const id = Number(route.params.id)
-    order.value = await api.get<OrderDetail>(`/dashboard/${id}`, {}, true)
-  })
-  
-  async function nextStatus() {
-    await api.put(`/cocktail-commandes/${order.value.id}`, {}, {}, true)
-    router.go(0) // recharge la page
+  async function loadDetail() {
+    const id = route.params.id as string
+    order.value = await api.get<OrderDetail>(`/orders/${id}`, {}, true)
   }
+  
+  onMounted(loadDetail)
   </script>
   

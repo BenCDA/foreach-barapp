@@ -1,18 +1,12 @@
-<!-- src/App.vue -->
 <template>
-  <!-- Affiche la page correspondant à la route actuelle -->
+  <NavBar />
   <router-view />
 </template>
 
-<script lang="ts">
-// On utilise defineComponent pour typer correctement notre composant racine
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'App',
-})
+<script lang="ts" setup>
+import NavBar from './components/NavBar.vue'
 </script>
 
 <style>
-/* Styles globaux éventuels */
+/* global si besoin */
 </style>

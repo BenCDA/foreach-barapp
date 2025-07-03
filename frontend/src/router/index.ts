@@ -97,21 +97,45 @@ const router = createRouter({
 })
 
 // Global guard
+// router.beforeEach((to, from, next) => {
+//   const token = localStorage.getItem('jwt')
+//   const userRole = localStorage.getItem('role')
+
+//   if (to.meta.requiresAuth && !token) {
+//     return next('/login')
+//   }
+
+//   if (to.path === '/' && token && userRole === 'ROLE_BARMAN') {
+//     // Si barman accède à la racine, redirige directement sur sa carte
+//     return next('/barman/cocktails')
+//   }
+
+//   if (to.meta.roles && userRole && !(to.meta.roles as string[]).includes(userRole)) {
+//     return next('/')
+//   }
+
+//   next()
+// })
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('jwt')
   const userRole = localStorage.getItem('role')
 
-  if (to.meta.requiresAuth && !token) {
-    return next('/login')
+  // Si la page requiert une auth
+  if (to.meta.requiresAuth) {
+    // Si pas de token ou pas de rôle => login
+    if (!token || !userRole) {
+      return next('/login')
+    }
+    // Si le rôle n'est pas dans la liste des rôles autorisés pour cette page
+    if (to.meta.roles && !(to.meta.roles as string[]).includes(userRole)) {
+      // Optionnel : tu peux envoyer vers une page 403 ou page d'accueil selon ton choix
+      return next('/')
+    }
   }
 
+  // Si barman va sur "/", redirige
   if (to.path === '/' && token && userRole === 'ROLE_BARMAN') {
-    // Si barman accède à la racine, redirige directement sur sa carte
     return next('/barman/cocktails')
-  }
-
-  if (to.meta.roles && userRole && !(to.meta.roles as string[]).includes(userRole)) {
-    return next('/')
   }
 
   next()

@@ -1,49 +1,52 @@
 <template>
-    <div class="min-h-screen bg-gray-50 flex flex-col items-center py-8 px-4">
-      <h1 class="text-4xl font-bold text-teal-600 mb-2 text-center">
-        Bienvenue sur Bar'App
-      </h1>
-      <p class="text-lg text-gray-700 mb-8 text-center max-w-2xl">
-        Découvrez nos cocktails et plongez dans l’univers de vos boissons préférées !
-      </p>
-  
-      <div v-if="loading" class="text-gray-500">Chargement des cocktails…</div>
-      <div v-else class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <CocktailCard
-          v-for="c in cocktails"
-          :key="c.id"
-          :cocktail="c"
-          @click="goToDetail(c.id)"
-        />
-      </div>
+  <div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">Nos cocktails</h1>
+
+    <!-- Filtre par catégorie -->
+    <div class="mb-6">
+      <label class="mr-2">Filtrer par catégorie :</label>
+      <select v-model="selectedCategory" @change="fetchCocktails"
+              class="border px-2 py-1">
+        <option :value="null">Toutes</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+          {{ cat.name }}
+        </option>
+      </select>
     </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { ref, onMounted } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { api } from '../services/api'
-  import type { Cocktail } from '../types'
-  import CocktailCard from '../components/CocktailCard.vue'
-  
-  const cocktails = ref<Cocktail[]>([])
-  const loading   = ref(true)
-  const router    = useRouter()
-  
-  async function fetchCocktails() {
-    try {
-      cocktails.value = await api.get<Cocktail[]>('/cocktails', {}, true)
-    } catch (e) {
-      console.error('Impossible de charger les cocktails', e)
-    } finally {
-      loading.value = false
-    }
-  }
-  
-  function goToDetail(id: number) {
-    router.push(`/cocktails/${id}`)
-  }
-  
-  onMounted(fetchCocktails)
-  </script>
-  
+
+    <!-- Liste des cocktails -->
+    <div class="grid grid-cols-3 gap-4">
+      <CocktailCard
+        v-for="cocktail in cocktails"
+        :key="cocktail.id"
+        :cocktail="cocktail"
+      />
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { ref, onMounted } from 'vue'
+import { api } from '../services/api'
+import CocktailCard from '../components/CocktailCard.vue'
+
+interface Category { id: number; name: string }
+interface Cocktail { id: number; name: string; imageUrl: string }
+
+const categories = ref<Category[]>([])
+const cocktails   = ref<Cocktail[]>([])
+const selectedCategory = ref<number|null>(null)
+
+// Charger d’abord les catégories, puis les cocktails
+onMounted(async () => {
+  categories.value = await api.get('/categories', {}, true)
+  await fetchCocktails()
+})
+
+async function fetchCocktails() {
+  const url = selectedCategory.value
+    ? `/cocktails?categoryId=${selectedCategory.value}`
+    : '/cocktails'
+  cocktails.value = await api.get(url, {}, true)
+}
+</script>

@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.barapp.dto.CocktailRequest;
 import com.barapp.dto.CocktailResponse;
+import com.barapp.model.Category;
 import com.barapp.repository.CategoryRepository;
 import com.barapp.repository.CocktailRepository;
 import com.barapp.repository.CocktailSizePriceRepository;
@@ -36,7 +37,7 @@ public class CocktailServiceImpl implements CocktailService {
         cocktail.setImageUrl(req.getImageUrl());
         if (req.getCategoryId() != null) {
             var cat = categoryRepo.findById(req.getCategoryId())
-                                  .orElseThrow(() -> new IllegalArgumentException("Categorie introuvable"));
+                                  .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable"));
             cocktail.setCategory(cat);
         }
         var saved = repo.save(cocktail);
@@ -47,6 +48,16 @@ public class CocktailServiceImpl implements CocktailService {
     @Override
     public List<CocktailResponse> getAll() {
         return repo.findAll().stream()
+                   .map(c -> new CocktailResponse(c.getId(), c.getName(), c.getDescription(),
+                                                  c.getImageUrl(), c.getCategory()))
+                   .toList();
+    }
+
+    @Override
+    public List<CocktailResponse> getByCategory(Long categoryId) {
+        Category cat = categoryRepo.findById(categoryId)
+            .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable"));
+        return repo.findByCategory(cat).stream()
                    .map(c -> new CocktailResponse(c.getId(), c.getName(), c.getDescription(),
                                                   c.getImageUrl(), c.getCategory()))
                    .toList();
@@ -69,7 +80,7 @@ public class CocktailServiceImpl implements CocktailService {
         c.setImageUrl(req.getImageUrl());
         if (req.getCategoryId() != null) {
             var cat = categoryRepo.findById(req.getCategoryId())
-                                  .orElseThrow(() -> new IllegalArgumentException("Categorie introuvable"));
+                                  .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable"));
             c.setCategory(cat);
         } else {
             c.setCategory(null);
@@ -82,7 +93,7 @@ public class CocktailServiceImpl implements CocktailService {
     @Override
     @Transactional
     public void delete(Long id) {
-        // Supprime les dépendances AVANT de supprimer le cocktail lui-même
+        // Supprime les dépendances avant de supprimer le cocktail
         cocktailSizePriceRepo.deleteAllByCocktailId(id);
         cocktailIngredientRepo.deleteAllByCocktailId(id);
         orderCocktailRepo.deleteAllByCocktailId(id);

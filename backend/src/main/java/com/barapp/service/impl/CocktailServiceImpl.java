@@ -3,11 +3,16 @@ package com.barapp.service.impl;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.barapp.dto.CocktailRequest;
 import com.barapp.dto.CocktailResponse;
 import com.barapp.repository.CategoryRepository;
 import com.barapp.repository.CocktailRepository;
+import com.barapp.repository.CocktailSizePriceRepository;
+import com.barapp.repository.CocktailIngredientRepository;
+import com.barapp.repository.OrderCocktailRepository;
+import com.barapp.repository.CartRepository;
 import com.barapp.service.CocktailService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +23,10 @@ public class CocktailServiceImpl implements CocktailService {
 
     private final CocktailRepository repo;
     private final CategoryRepository categoryRepo;
+    private final CocktailSizePriceRepository cocktailSizePriceRepo;
+    private final CocktailIngredientRepository cocktailIngredientRepo;
+    private final OrderCocktailRepository orderCocktailRepo;
+    private final CartRepository cartRepo;
 
     @Override
     public CocktailResponse create(CocktailRequest req) {
@@ -71,7 +80,13 @@ public class CocktailServiceImpl implements CocktailService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
+        // Supprime les dépendances AVANT de supprimer le cocktail lui-même
+        cocktailSizePriceRepo.deleteAllByCocktailId(id);
+        cocktailIngredientRepo.deleteAllByCocktailId(id);
+        orderCocktailRepo.deleteAllByCocktailId(id);
+        cartRepo.deleteAllByCocktailId(id);
         repo.deleteById(id);
     }
 }

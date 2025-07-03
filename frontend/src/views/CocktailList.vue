@@ -70,15 +70,20 @@ async function fetchCocktails() {
 
 async function deleteCocktail(id: number) {
   if (!confirm('Confirmez-vous la suppression de ce cocktail ?')) return
+
   try {
     await api.delete(`/cocktails/${id}`, {}, true)
-    // relance le chargement
     await fetchCocktails()
-  } catch (e) {
+  } catch (e: any) {
     console.error('Erreur suppression', e)
-    alert('Impossible de supprimer.')
+    alert('Impossible de supprimer : ' + e.message)
   }
 }
+
+
+
+
+
 
 onMounted(fetchCocktails)
 </script>

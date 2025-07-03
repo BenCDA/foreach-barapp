@@ -32,21 +32,21 @@ public class CategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_BARMAN')")
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
         return categoryService.create(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_BARMAN')")
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
     public CategoryResponse update(@PathVariable Long id,
                                    @Valid @RequestBody CategoryRequest request) {
         return categoryService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_BARMAN')")
+    @PreAuthorize("hasAuthority('ROLE_BARMAN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         categoryService.delete(id);

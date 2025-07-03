@@ -47,59 +47,68 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1) CORS + CSRF off + Stateless
-                .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 2) Règles d’accès
-                .authorizeHttpRequests(auth -> auth
-                    // Pré-flight
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    // Endpoints publics
-                    .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
-                    // Commandes CLIENT
-                    .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
-                    .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAuthority("ROLE_CLIENT")
-                    // Panier CLIENT
-                    .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
-                    // Tailles accessibles aux CLIENT et BARMAN
-                    .requestMatchers(HttpMethod.GET, "/api/sizes/**")
-                        .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
-                    // Opérations sizes réservées au BARMAN
-                    .requestMatchers(HttpMethod.POST, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PUT, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
-                    // Endpoints BARMAN sur cocktails
-                    .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.POST, "/api/cocktails").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PUT, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
-                    // Lecture ingrédients pour un cocktail (CLIENT & BARMAN)
-                    .requestMatchers(HttpMethod.GET, "/api/cocktail-ingredients/by-cocktail/**")
-                        .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
-                    // CRUD ingrédients (BARMAN)
-                    .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
-                    // ---- ⚠️ Ordre important : by-cocktail AVANT la règle globale ----
-                    // Lecture prix pour un cocktail (CLIENT & BARMAN)
-                    .requestMatchers(HttpMethod.GET, "/api/cocktail-size-prices/by-cocktail/**")
-                        .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
-                    // CRUD prix (BARMAN)
-                    .requestMatchers("/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
-                    // Commandes à traiter / mise à jour (BARMAN)
-                    .requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
-                    // Tout le reste -> authentifié
-                    .anyRequest().authenticated()
-                )
-                // 3) Provider + filtre JWT
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(new JwtFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class);
+            // 1) CORS + CSRF off + Stateless
+            .cors(Customizer.withDefaults())
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // 2) Règles d’accès
+            .authorizeHttpRequests(auth -> auth
+                // Pré-flight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Endpoints publics
+                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+
+                // ---------- CRUD COCKTAILS pour BARMAN (ordre important !) ----------
+                .requestMatchers(HttpMethod.DELETE, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PUT, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/cocktails/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.POST, "/api/cocktails").hasAuthority("ROLE_BARMAN")
+
+                // ---------- GET COCKTAILS public (pour tous les users, y compris non connectés) ----------
+                .requestMatchers(HttpMethod.GET, "/api/cocktails/**").permitAll()
+
+                // Commandes CLIENT
+                .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAuthority("ROLE_CLIENT")
+                // Panier CLIENT
+                .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
+
+                // Tailles accessibles aux CLIENT et BARMAN
+                .requestMatchers(HttpMethod.GET, "/api/sizes/**")
+                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // Opérations sizes réservées au BARMAN
+                .requestMatchers(HttpMethod.POST, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PUT, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.DELETE, "/api/sizes/**").hasAuthority("ROLE_BARMAN")
+
+                // Endpoints BARMAN sur catégories
+                .requestMatchers("/api/categories/**").hasAuthority("ROLE_BARMAN")
+
+                // Lecture ingrédients pour un cocktail (CLIENT & BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/cocktail-ingredients/by-cocktail/**")
+                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // CRUD ingrédients (BARMAN)
+                .requestMatchers("/api/cocktail-ingredients/**").hasAuthority("ROLE_BARMAN")
+
+                // Lecture prix pour un cocktail (CLIENT & BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/cocktail-size-prices/by-cocktail/**")
+                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
+                // CRUD prix (BARMAN)
+                .requestMatchers("/api/cocktail-size-prices/**").hasAuthority("ROLE_BARMAN")
+
+                // Commandes à traiter / mise à jour (BARMAN)
+                .requestMatchers(HttpMethod.GET, "/api/orders/to-treat").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ROLE_BARMAN")
+                .requestMatchers(HttpMethod.PATCH, "/api/order-cocktails/*/step").hasAuthority("ROLE_BARMAN")
+
+                // Tout le reste -> authentifié
+                .anyRequest().authenticated()
+            )
+            // 3) Provider + filtre JWT
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -135,9 +144,9 @@ public class SecurityConfig {
 
         @Override
         protected void doFilterInternal(HttpServletRequest req,
-                HttpServletResponse res,
-                FilterChain chain)
-                throws ServletException, IOException {
+                                        HttpServletResponse res,
+                                        FilterChain chain)
+                                        throws ServletException, IOException {
             String header = req.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
                 String token = header.substring(7);

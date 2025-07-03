@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,19 +17,40 @@ import com.barapp.model.Category;
 import com.barapp.model.Cocktail;
 import com.barapp.repository.CategoryRepository;
 import com.barapp.repository.CocktailRepository;
+import com.barapp.repository.CocktailSizePriceRepository;
+import com.barapp.repository.CocktailIngredientRepository;
+import com.barapp.repository.OrderCocktailRepository;
+import com.barapp.repository.CartRepository;
 import com.barapp.service.impl.CocktailServiceImpl;
 
 public class CocktailServiceTest {
 
     private CocktailRepository cocktailRepository;
     private CategoryRepository categoryRepository;
+    private CocktailSizePriceRepository cocktailSizePriceRepository;
+    private CocktailIngredientRepository cocktailIngredientRepository;
+    private OrderCocktailRepository orderCocktailRepository;
+    private CartRepository cartRepository;
+
     private CocktailService cocktailService;
 
     @BeforeEach
     void setUp() {
         cocktailRepository = mock(CocktailRepository.class);
         categoryRepository = mock(CategoryRepository.class);
-        cocktailService = new CocktailServiceImpl(cocktailRepository, categoryRepository);
+        cocktailSizePriceRepository = mock(CocktailSizePriceRepository.class);
+        cocktailIngredientRepository = mock(CocktailIngredientRepository.class);
+        orderCocktailRepository = mock(OrderCocktailRepository.class);
+        cartRepository = mock(CartRepository.class);
+
+        cocktailService = new CocktailServiceImpl(
+            cocktailRepository,
+            categoryRepository,
+            cocktailSizePriceRepository,
+            cocktailIngredientRepository,
+            orderCocktailRepository,
+            cartRepository
+        );
     }
 
     @Test
@@ -49,6 +71,6 @@ public class CocktailServiceTest {
 
         assertNotNull(response);
         assertEquals("Mojito", response.getName());
-        assertEquals("Classique", category.getName());
+        assertEquals("Classique", response.getCategory().getName());
     }
 }

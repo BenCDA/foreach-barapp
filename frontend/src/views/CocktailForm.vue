@@ -31,12 +31,13 @@
         <label class="block mb-2">Ingrédients</label>
         <div class="space-y-2">
           <div v-for="(ing, i) in form.ingredients" :key="ing.tempId" class="flex gap-2">
-            <input v-model="ing.name" list="ingredient-options" placeholder="Ingrédient" class="flex-1 border px-2 py-1" />
+            <input v-model="ing.name" list="ingredient-options" placeholder="Ingrédient"
+              class="flex-1 border px-2 py-1" />
             <input v-model="ing.quantity" placeholder="Quantité" class="flex-1 border px-2 py-1" />
             <button type="button" @click="removeIngredient(i)" class="text-red-500">✕</button>
           </div>
           <datalist id="ingredient-options">
-            <option v-for="opt in ingredientSuggestions" :key="opt.id" :value="opt.name"/>
+            <option v-for="opt in ingredientSuggestions" :key="opt.id" :value="opt.name" />
           </datalist>
           <button type="button" @click="addIngredient" class="text-teal-600 text-sm hover:underline">
             + Ajouter un ingrédient
@@ -50,12 +51,9 @@
         <div class="grid grid-cols-3 gap-4">
           <div v-for="size in sortedSizes" :key="size.label">
             <label class="block mb-1">{{ size.label }}</label>
-            <input
-              v-model.number="form.prices[size.id].prix"
-              type="number" min="0"
+            <input v-model.number="form.prices[size.id].prix" type="number" min="0"
               :placeholder="form.prices[size.id].id ? form.prices[size.id].prix : 'Prix'"
-              class="w-full border px-2 py-1"
-            />
+              class="w-full border px-2 py-1" />
           </div>
         </div>
       </div>
@@ -188,12 +186,12 @@ async function submitCocktail() {
       if (ing.id) {
         await api.put(`/cocktail-ingredients/${ing.id}`, {
           cocktailId: id,
-          ingredientId: ingredientSuggestions.value.find(i=>i.name===ing.name)!.id,
+          ingredientId: ingredientSuggestions.value.find(i => i.name === ing.name)!.id,
           quantite: ing.quantity
         }, {}, true)
         existing.delete(ing.id)
       } else {
-        const ingrObj = ingredientSuggestions.value.find(i=>i.name===ing.name)
+        const ingrObj = ingredientSuggestions.value.find(i => i.name === ing.name)
         const ingId = ingrObj ? ingrObj.id :
           (await api.post('/ingredients', { name: ing.name }, {}, true)).id
         await api.post('/cocktail-ingredients', {

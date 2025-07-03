@@ -4,14 +4,29 @@
       <h1 class="text-2xl font-bold text-teal-600">Commandes en cours</h1>
       <div
         v-for="o in orders"
-        :key="o.id"
-        class="p-4 border rounded hover:shadow cursor-pointer flex justify-between items-center"
-        @click="goDetail(o.id)"
+        :key="o.orderId"
+        class="p-4 border rounded hover:shadow flex justify-between items-center"
       >
-        <div>
-          <span class="font-semibold">Commande <span class="text-teal-500">#{{ o.id }}</span></span>
+        <div @click="goDetail(o.orderId)" class="cursor-pointer">
+          <span class="font-semibold">Commande <span class="text-teal-500">#{{ o.orderId }}</span></span>
         </div>
-        <span class="capitalize text-gray-700">{{ formatStatus(o.status) }}</span>
+        <div class="flex items-center space-x-3">
+          <select
+            class="border rounded px-2 py-1 text-sm"
+            v-model="o.status"
+            @change="updateStatus(o)"
+          >
+            <option value="COMMANDEE">Commandée</option>
+            <option value="EN_PREPARATION">En préparation</option>
+            <option value="TERMINEE">Terminée</option>
+          </select>
+          <button
+            class="text-sm text-teal-600 hover:underline"
+            @click="goDetail(o.orderId)"
+          >
+            Détails
+          </button>
+        </div>
       </div>
       <p v-if="!loading && orders.length === 0" class="text-gray-500">
         Aucune commande à traiter.
@@ -27,7 +42,7 @@ import { api } from '../services/api'
 
 // On définit un type résumé
 interface OrderSummary {
-  id: number
+  orderId: number
   status: 'COMMANDEE' | 'EN_PREPARATION' | 'TERMINEE'
 }
 
@@ -46,8 +61,8 @@ onMounted(async () => {
   }
 })
 
-function goDetail(id: number) {
-  router.push(`/dashboard/${id}`)
+function goDetail(orderId: number) {
+  router.push(`/dashboard/${orderId}`)
 }
 
 function formatStatus(s: OrderSummary['status']) {
@@ -56,5 +71,13 @@ function formatStatus(s: OrderSummary['status']) {
     EN_PREPARATION: 'En préparation',
     TERMINEE: 'Terminée'
   }[s] || s
+}
+
+async function updateStatus(o: OrderSummary) {
+  try {
+    await api.patch(`/orders/${o.orderId}/status`, { statut: o.status }, {}, true)
+  } catch (e) {
+    console.error('Erreur mise à jour statut', e)
+  }
 }
 </script>

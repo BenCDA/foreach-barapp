@@ -42,7 +42,16 @@ public class OrderController {
     public List<OrderResponse> toTreat() {
         return orderService.getByStatusNotFinished();
     }
-
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_BARMAN')")
+    public OrderResponse getById(@PathVariable Long id, Authentication auth) {
+        boolean isClient = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CLIENT"));
+        if (isClient) {
+            return orderService.getByIdAndUserEmail(id, auth.getName());
+        }
+        return orderService.getById(id);
+    }
     // BARMAN : change statut global
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('ROLE_BARMAN')")

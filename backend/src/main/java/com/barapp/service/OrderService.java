@@ -10,6 +10,7 @@ public interface OrderService {
     OrderResponse create(String userEmail, OrderRequest request);
     List<OrderResponse> getByUserEmail(String userEmail);
     OrderResponse getByIdAndUserEmail(Long orderId, String userEmail);
+    OrderResponse getById(Long orderId);
     List<OrderResponse> getByStatusNotFinished();
     OrderResponse updateStatus(Long orderId, StatusRequest statusRequest);
 }

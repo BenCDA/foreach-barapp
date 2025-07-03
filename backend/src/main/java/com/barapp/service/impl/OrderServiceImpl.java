@@ -85,12 +85,20 @@ public class OrderServiceImpl implements OrderService {
         List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
         return OrderResponse.from(o, lines);
     }
-
+    //
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getById(Long orderId) {
+        Order o = orderRepository.findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Commande introuvable"));
+        List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
+        return OrderResponse.from(o, lines);
+    }
+    //
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getByStatusNotFinished() {
-        // pour l’instant on renvoie tout, tu peux filtrer par o.getStatus()!=TERMINEE
-        return orderRepository.findAll().stream()
+        return orderRepository.findByStatusNot(Order.Status.TERMINEE).stream()
             .map(o -> {
                 List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
                 return OrderResponse.from(o, lines);

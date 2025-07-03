@@ -70,7 +70,8 @@ public class SecurityConfig {
 
                 // Commandes CLIENT
                 .requestMatchers(HttpMethod.POST, "/api/orders").hasAuthority("ROLE_CLIENT")
-                .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAuthority("ROLE_CLIENT")
+                .requestMatchers(HttpMethod.GET, "/api/orders/**")
+                    .hasAnyAuthority("ROLE_CLIENT", "ROLE_BARMAN")
                 // Panier CLIENT
                 .requestMatchers("/api/cart/**").hasAuthority("ROLE_CLIENT")
 

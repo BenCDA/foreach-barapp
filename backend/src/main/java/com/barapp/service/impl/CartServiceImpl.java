@@ -19,6 +19,7 @@ public class CartServiceImpl implements CartService {
     private final CocktailRepository cocktailRepository;
     private final SizeRepository sizeRepository;
     private final CartRepository cartRepository;
+    private final CocktailSizePriceRepository cocktailSizePriceRepository;
 
     @Override
     public void addToCart(String email, CartRequest request) {
@@ -36,11 +37,23 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartResponse> getCart(String email) {
         User user = userRepository.findByEmail(email).orElseThrow();
-        return cartRepository.findByUser(user).stream().map(cart -> {
+        List<Cart> carts = cartRepository.findByUser(user);
+
+        return carts.stream().map(cart -> {
             CartResponse response = new CartResponse();
             response.setId(cart.getId());
             response.setCocktailName(cart.getCocktail().getName());
             response.setSizeLabel(cart.getSize().getLabel());
+
+            // Récupère le prix à partir de CocktailSizePriceRepository
+            Integer price = cocktailSizePriceRepository
+                .findByCocktailId(cart.getCocktail().getId()).stream()
+                .filter(csp -> csp.getSize().getId().equals(cart.getSize().getId()))
+                .map(CocktailSizePrice::getPrice)
+                .findFirst()
+                .orElse(0);
+
+            response.setPrice(price);
             return response;
         }).collect(Collectors.toList());
     }

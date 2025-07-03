@@ -10,7 +10,6 @@ import java.util.List;
 public interface CocktailSizePriceRepository extends JpaRepository<CocktailSizePrice, Long> {
     List<CocktailSizePrice> findByCocktailId(Long cocktailId);
 
-    // Ajout : suppression de toutes les lignes associées à un cocktail
     @Modifying
     @Transactional
     @Query("DELETE FROM CocktailSizePrice csp WHERE csp.cocktail.id = :cocktailId")

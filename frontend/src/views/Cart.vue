@@ -9,34 +9,30 @@
       </div>
 
       <div v-else class="space-y-4">
-        <div v-for="item in items" :key="item.id" class="flex justify-between items-center">
+        <div v-for="item in items" :key="item.id" class="flex justify-between items-center border-b pb-2">
           <div>
-            <h2 class="font-semibold">
-              {{ item.cocktail ? item.cocktail.name : item.cocktailId }}
-            </h2>
+            <h2 class="font-semibold">{{ item.cocktailName }}</h2>
             <p class="text-sm text-gray-600">
-              Taille {{ item.size ? item.size.libelle : item.sizeId }} × {{ item.quantity }}
+              Taille {{ item.sizeLabel }} × {{ item.quantity ?? 1 }}
             </p>
-
           </div>
-          <span class="font-medium">{{ item.price }}€</span>
+          <span class="font-medium">{{ item.price !== undefined ? item.price + ' €' : '? €' }}</span>
         </div>
 
-        <div class="flex justify-between font-semibold text-lg">
+        <div class="flex justify-between font-semibold text-lg mt-4">
           <span>Total</span>
-          <span>{{ total }}€</span>
+          <span>{{ total }} €</span>
         </div>
 
         <button @click="placeOrder"
           class="w-full py-3 bg-teal-400 hover:bg-teal-500 text-white font-semibold rounded-lg transition">
           Commander
         </button>
-
       </div>
     </div>
   </div>
 </template>
-  
+
 <script lang="ts" setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -44,10 +40,10 @@ import { api } from '../services/api'
 
 interface CartItem {
   id: number
-  quantity: number
+  cocktailName: string
+  sizeLabel: string
   price: number
-  cocktail: { id: number; name: string }
-  size: { id: number; libelle: string }
+  quantity?: number // Optionnel, fallback à 1 si absent
 }
 
 const items = ref<CartItem[]>([])
@@ -65,7 +61,7 @@ async function loadCart() {
 }
 
 const total = computed(() =>
-  items.value.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  items.value.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 1), 0)
 )
 
 async function placeOrder() {
@@ -80,8 +76,3 @@ async function placeOrder() {
 
 onMounted(loadCart)
 </script>
-  
-<style scoped>
-/* styles éventuels */
-</style>
-  

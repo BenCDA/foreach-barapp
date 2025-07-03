@@ -1,34 +1,60 @@
-<!-- src/views/Dashboard.vue -->
 <template>
-    <div class="min-h-screen bg-gray-50 p-4">
-      <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow space-y-4">
-        <h1 class="text-2xl font-bold text-teal-600">Commandes en cours</h1>
-        <div v-for="o in orders" :key="o.id" class="p-4 border rounded hover:shadow cursor-pointer" @click="goDetail(o.id)">
-          <div class="flex justify-between">
-            <span>Commande #{{ o.id }}</span>
-            <span class="capitalize">{{ o.statut.toLowerCase() }}</span>
-          </div>
+  <div class="min-h-screen bg-gray-50 p-4">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow space-y-4">
+      <h1 class="text-2xl font-bold text-teal-600">Commandes en cours</h1>
+      <div
+        v-for="o in orders"
+        :key="o.id"
+        class="p-4 border rounded hover:shadow cursor-pointer flex justify-between items-center"
+        @click="goDetail(o.id)"
+      >
+        <div>
+          <span class="font-semibold">Commande <span class="text-teal-500">#{{ o.id }}</span></span>
         </div>
-        <p v-if="!orders.length">Aucune commande dans ce statut.</p>
+        <span class="capitalize text-gray-700">{{ formatStatus(o.status) }}</span>
       </div>
+      <p v-if="!loading && orders.length === 0" class="text-gray-500">
+        Aucune commande à traiter.
+      </p>
     </div>
-  </template>
-  
-  <script lang="ts" setup>
-  import { ref, onMounted } from 'vue'
-  import { api } from '../services/api'
-  import type { OrderSummary } from '../types'
-  import { useRouter } from 'vue-router'
-  
-  const orders = ref<OrderSummary[]>([])
-  const router = useRouter()
-  
-  onMounted(async () => {
-    orders.value = await api.get<OrderSummary[]>('/dashboard', {}, true)
-  })
-  
-  function goDetail(id: number) {
-    router.push(`/dashboard/${id}`)
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { api } from '../services/api'
+
+// On définit un type résumé
+interface OrderSummary {
+  id: number
+  status: 'COMMANDEE' | 'EN_PREPARATION' | 'TERMINEE'
+}
+
+const orders = ref<OrderSummary[]>([])
+const loading = ref(true)
+const router = useRouter()
+
+onMounted(async () => {
+  try {
+    // Appel de l'endpoint barman
+    orders.value = await api.get<OrderSummary[]>('/orders/to-treat', {}, true)
+  } catch (e) {
+    console.error('Erreur chargement des commandes', e)
+  } finally {
+    loading.value = false
   }
-  </script>
-  
+})
+
+function goDetail(id: number) {
+  router.push(`/dashboard/${id}`)
+}
+
+function formatStatus(s: OrderSummary['status']) {
+  return {
+    COMMANDEE: 'Commandée',
+    EN_PREPARATION: 'En préparation',
+    TERMINEE: 'Terminée'
+  }[s] || s
+}
+</script>

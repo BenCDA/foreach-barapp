@@ -24,7 +24,7 @@
             class="text-sm text-teal-600 hover:underline"
             @click="goDetail(o.orderId)"
           >
-            Détails
+            Mettre à jour
           </button>
         </div>
       </div>

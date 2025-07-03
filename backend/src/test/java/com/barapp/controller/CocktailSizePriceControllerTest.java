@@ -12,6 +12,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.Import;
 
 import java.util.Collections;
 
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CocktailSizePriceController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(com.barapp.TestSecurityConfig.class)
 public class CocktailSizePriceControllerTest {
 
     @Autowired

@@ -9,25 +9,30 @@
       </div>
 
       <div v-else class="space-y-4">
-        <div v-for="item in items" :key="item.id" class="flex justify-between items-center border-b pb-2">
+        <div v-for="item in items" :key="item.id" class="flex justify-between items-center">
           <div>
-            <h2 class="font-semibold">{{ item.cocktailName }}</h2>
+            <h2 class="font-semibold">
+              {{ item.cocktailName }}
+            </h2>
             <p class="text-sm text-gray-600">
-              Taille {{ item.sizeLabel }} × {{ item.quantity ?? 1 }}
+              Taille {{ item.sizeLabel }} × 1
             </p>
           </div>
-          <span class="font-medium">{{ item.price !== undefined ? item.price + ' €' : '? €' }}</span>
+          <span class="font-medium">{{ item.price }} €</span>
         </div>
 
-        <div class="flex justify-between font-semibold text-lg mt-4">
+        <div class="flex justify-between font-semibold text-lg pt-2 border-t">
           <span>Total</span>
           <span>{{ total }} €</span>
         </div>
 
         <button @click="placeOrder"
-          class="w-full py-3 bg-teal-400 hover:bg-teal-500 text-white font-semibold rounded-lg transition">
+          class="w-full py-3 bg-teal-400 hover:bg-teal-500 text-white font-semibold rounded-lg transition mt-4"
+          :disabled="items.length === 0 || placingOrder">
           Commander
         </button>
+
+        <div v-if="errorMsg" class="text-red-500 mt-2 text-center">{{ errorMsg }}</div>
       </div>
     </div>
   </div>
@@ -43,34 +48,46 @@ interface CartItem {
   cocktailName: string
   sizeLabel: string
   price: number
-  quantity?: number // Optionnel, fallback à 1 si absent
 }
 
 const items = ref<CartItem[]>([])
 const loading = ref(true)
+const placingOrder = ref(false)
+const errorMsg = ref('')
 const router = useRouter()
 
 async function loadCart() {
+  loading.value = true
   try {
     items.value = await api.get<CartItem[]>('/cart', {}, true)
   } catch (e) {
-    console.error('Erreur chargement panier', e)
+    errorMsg.value = 'Erreur chargement panier'
   } finally {
     loading.value = false
   }
 }
 
 const total = computed(() =>
-  items.value.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 1), 0)
+  items.value.reduce((sum, i) => sum + (i.price || 0), 0)
 )
 
 async function placeOrder() {
+  errorMsg.value = ''
+  placingOrder.value = true
   try {
-    const order: any = await api.post('/orders', {}, {}, true)
-    router.push(`/orders/${order.id}`)
-  } catch (e) {
-    console.error('Erreur création commande', e)
-    alert('Impossible de passer la commande.')
+    // Prends le premier item du panier pour récupérer un panierId
+    const panierId = items.value.length > 0 ? items.value[0].id : null
+    if (!panierId) {
+      errorMsg.value = 'Votre panier est vide.'
+      placingOrder.value = false
+      return
+    }
+    await api.post('/orders', { panierId }, {}, true)
+    router.push('/orders')
+  } catch (e: any) {
+    errorMsg.value = e.message || 'Impossible de passer la commande.'
+  } finally {
+    placingOrder.value = false
   }
 }
 

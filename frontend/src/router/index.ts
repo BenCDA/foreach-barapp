@@ -10,6 +10,7 @@ import OrderDetail from '../views/OrderDetail.vue'
 import NotFound from '../views/NotFound.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
+import OrderProgress from '../views/OrderProgress.vue'
 
 const ROLE_CLIENT = 'ROLE_CLIENT'
 const ROLE_BARMAN = 'ROLE_BARMAN'
@@ -67,6 +68,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/orders',
     component: Orders,
+    meta: { requiresAuth: true, roles: [ROLE_CLIENT] }
+  },
+
+  {
+    path: '/orders/:id/avancement',
+    component: OrderProgress, // <--- nouvelle page de suivi
     meta: { requiresAuth: true, roles: [ROLE_CLIENT] }
   },
 

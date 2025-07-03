@@ -11,7 +11,7 @@
           <label class="font-semibold mb-2 block">Prix par taille :</label>
           <select v-model="selectedSizeId" class="mb-2 border rounded px-3 py-2">
             <option v-for="sp in sizePrices" :key="sp.sizeId" :value="sp.sizeId">
-              {{ sp.sizeLabel }} - {{ sp.price }} €
+              {{ getSizeLabel(sp.sizeId) }} - {{ sp.price }} €
             </option>
           </select>
         </div>
@@ -48,7 +48,6 @@
     id: number
     cocktailId: number
     sizeId: number
-    sizeLabel: string
     price: number
   }
   
@@ -61,6 +60,15 @@
   const loading = ref(false)
   const successMsg = ref('')
   const errorMsg = ref('')
+  
+  function getSizeLabel(sizeId: number): string {
+    switch (sizeId) {
+      case 1: return "S"
+      case 2: return "M"
+      case 3: return "L"
+      default: return `Taille #${sizeId}`
+    }
+  }
   
   const currentPrice = computed(() => {
     const sp = sizePrices.value.find((sp) => sp.sizeId === selectedSizeId.value)
@@ -76,10 +84,10 @@
     }
     try {
       const prices = await api.get<SizePrice[]>(`/cocktail-size-prices/by-cocktail/${cocktailId}`, {}, true)
-      // Optionnel : ordonner par S, M, L (si besoin)
-      sizePrices.value = ['S', 'M', 'L'].flatMap(label =>
-        prices.filter(sp => sp.sizeLabel === label)
-      ).concat(prices.filter(sp => !['S', 'M', 'L'].includes(sp.sizeLabel)));
+      // Optionnel : ordonner par S, M, L (id: 1,2,3)
+      sizePrices.value = [1, 2, 3].flatMap(id =>
+        prices.filter(sp => sp.sizeId === id)
+      ).concat(prices.filter(sp => ![1, 2, 3].includes(sp.sizeId)));
       if (sizePrices.value.length) selectedSizeId.value = sizePrices.value[0].sizeId
     } catch (e) {
       errorMsg.value = "Erreur chargement des tailles/prix"

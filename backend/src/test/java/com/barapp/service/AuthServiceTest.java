@@ -43,7 +43,9 @@ public class AuthServiceTest {
 
     @Test
     void login_shouldReturnToken() {
-        LoginRequest request = new LoginRequest("ben@test.com", "pwd");
+        LoginRequest request = new LoginRequest();
+        request.setEmail("ben@test.com");
+        request.setPassword("pwd");
         Authentication auth = new UsernamePasswordAuthenticationToken("ben@test.com", "pwd");
         when(authenticationManager.authenticate(any())).thenReturn(auth);
         User user = new User(1L, "Ben", "ben@test.com", "pwd", CLIENT);

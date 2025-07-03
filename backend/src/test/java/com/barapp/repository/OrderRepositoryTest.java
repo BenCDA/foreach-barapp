@@ -33,7 +33,7 @@ public class OrderRepositoryTest {
         Order order = new Order();
         order.setUser(user);
         order.setStatus(Order.Status.COMMANDEE);
-        order.setDate(LocalDateTime.now());
+        order.setOrderDate(LocalDateTime.now());
         orderRepository.save(order);
 
         List<Order> list = orderRepository.findByUser(user);
@@ -51,7 +51,7 @@ public class OrderRepositoryTest {
         Order order = new Order();
         order.setUser(user);
         order.setStatus(Order.Status.COMMANDEE);
-        order.setDate(LocalDateTime.now());
+        order.setOrderDate(LocalDateTime.now());
         orderRepository.save(order);
 
         List<Order> list = orderRepository.findByStatusNot(Order.Status.TERMINEE);

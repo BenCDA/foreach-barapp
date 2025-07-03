@@ -38,7 +38,7 @@ public class OrderCocktailRepositoryTest {
         Order order = new Order();
         order.setUser(user);
         order.setStatus(Order.Status.COMMANDEE);
-        order.setDate(LocalDateTime.now());
+        order.setOrderDate(LocalDateTime.now());
         orderRepository.save(order);
 
         Cocktail c = new Cocktail();

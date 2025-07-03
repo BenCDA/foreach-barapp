@@ -49,11 +49,11 @@ public class OrderCocktailServiceTest {
         when(repo.findById(3L)).thenReturn(Optional.of(oc));
         when(repo.save(any(OrderCocktail.class))).thenAnswer(i -> i.getArgument(0));
         OrderCocktailRequest req = new OrderCocktailRequest();
-        req.setStep(OrderCocktail.Step.SERVI);
+        req.setStep(OrderCocktail.Step.TERMINE);
 
         OrderCocktailResponse resp = service.updateStep(3L, req);
 
-        assertEquals("SERVI", resp.getStep());
+        assertEquals(OrderCocktail.Step.TERMINE, resp.getStep());
         verify(repo).save(any(OrderCocktail.class));
     }
 }

@@ -39,7 +39,11 @@ public class OrderCocktailControllerWebTest {
 
     @Test
     void updateStep_shouldReturnOk() throws Exception {
-        OrderCocktailResponse resp = new OrderCocktailResponse(1L,1L,1L,"PREPARATION");
+        OrderCocktailResponse resp = new OrderCocktailResponse();
+        resp.setId(1L);
+        resp.setOrderId(1L);
+        resp.setCocktailId(1L);
+        resp.setStep(com.barapp.model.OrderCocktail.Step.PREPARATION);
         Mockito.when(service.updateStep(eq(1L), any(OrderCocktailRequest.class))).thenReturn(resp);
 
         mockMvc.perform(patch("/api/order-cocktails/1/step")

@@ -7,11 +7,11 @@ import com.barapp.model.Order;
 import com.barapp.model.OrderCocktail;
 import com.barapp.model.User;
 import com.barapp.repository.CartRepository;
+import com.barapp.repository.CocktailSizePriceRepository;
 import com.barapp.repository.OrderCocktailRepository;
 import com.barapp.repository.OrderRepository;
 import com.barapp.repository.UserRepository;
 import com.barapp.service.OrderService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +25,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final UserRepository          userRepository;
-    private final CartRepository          cartRepository;
-    private final OrderRepository         orderRepository;
+    private final UserRepository userRepository;
+    private final CartRepository cartRepository;
+    private final OrderRepository orderRepository;
     private final OrderCocktailRepository orderCocktailRepository;
+    private final CocktailSizePriceRepository cocktailSizePriceRepository;
 
     @Override
     public OrderResponse create(String userEmail, OrderRequest request) {
@@ -57,8 +58,8 @@ public class OrderServiceImpl implements OrderService {
         // Vide le panier
         cartRepository.deleteByUser(user);
 
-        // Retourne le DTO
-        return OrderResponse.from(savedOrder, lines);
+        // Retourne le DTO avec prix
+        return OrderResponse.from(savedOrder, lines, cocktailSizePriceRepository);
     }
 
     @Override
@@ -69,7 +70,7 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findByUser(user).stream()
             .map(o -> {
                 List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
-                return OrderResponse.from(o, lines);
+                return OrderResponse.from(o, lines, cocktailSizePriceRepository);
             })
             .collect(Collectors.toList());
     }
@@ -83,25 +84,25 @@ public class OrderServiceImpl implements OrderService {
             throw new SecurityException("Accès refusé");
         }
         List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
-        return OrderResponse.from(o, lines);
+        return OrderResponse.from(o, lines, cocktailSizePriceRepository);
     }
-    //
+
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getById(Long orderId) {
         Order o = orderRepository.findById(orderId)
             .orElseThrow(() -> new IllegalArgumentException("Commande introuvable"));
         List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
-        return OrderResponse.from(o, lines);
+        return OrderResponse.from(o, lines, cocktailSizePriceRepository);
     }
-    //
+
     @Override
     @Transactional(readOnly = true)
     public List<OrderResponse> getByStatusNotFinished() {
         return orderRepository.findByStatusNot(Order.Status.TERMINEE).stream()
             .map(o -> {
                 List<OrderCocktail> lines = orderCocktailRepository.findByOrder(o);
-                return OrderResponse.from(o, lines);
+                return OrderResponse.from(o, lines, cocktailSizePriceRepository);
             })
             .collect(Collectors.toList());
     }
@@ -113,6 +114,6 @@ public class OrderServiceImpl implements OrderService {
         o.setStatus(Order.Status.valueOf(request.getStatut()));
         Order updated = orderRepository.save(o);
         List<OrderCocktail> lines = orderCocktailRepository.findByOrder(updated);
-        return OrderResponse.from(updated, lines);
+        return OrderResponse.from(updated, lines, cocktailSizePriceRepository);
     }
 }

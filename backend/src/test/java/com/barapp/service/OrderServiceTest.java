@@ -2,8 +2,14 @@ package com.barapp.service;
 
 import com.barapp.dto.OrderRequest;
 import com.barapp.dto.OrderResponse;
-import com.barapp.model.*;
+import com.barapp.model.Cart;
+import com.barapp.model.Cocktail;
+import com.barapp.model.Order;
+import com.barapp.model.OrderCocktail;
+import com.barapp.model.Size;
+import com.barapp.model.User;
 import com.barapp.repository.CartRepository;
+import com.barapp.repository.CocktailSizePriceRepository;  // ← ajouté
 import com.barapp.repository.OrderCocktailRepository;
 import com.barapp.repository.OrderRepository;
 import com.barapp.repository.UserRepository;
@@ -26,8 +32,9 @@ public class OrderServiceTest {
     private CartRepository cartRepository;
     private OrderRepository orderRepository;
     private OrderCocktailRepository orderCocktailRepository;
+    private CocktailSizePriceRepository cocktailSizePriceRepository;  // ← mock pour le 5ᵉ paramètre
 
-    private OrderService orderService;
+    private OrderServiceImpl orderService;  // on teste l’implémentation
 
     @BeforeEach
     void setUp() {
@@ -35,28 +42,43 @@ public class OrderServiceTest {
         cartRepository = mock(CartRepository.class);
         orderRepository = mock(OrderRepository.class);
         orderCocktailRepository = mock(OrderCocktailRepository.class);
+        cocktailSizePriceRepository = mock(CocktailSizePriceRepository.class);  // ← initialisation du mock
 
-        orderService = new OrderServiceImpl(userRepository, cartRepository, orderRepository, orderCocktailRepository);
+        // Passe bien les 5 dépendances au constructeur
+        orderService = new OrderServiceImpl(
+            userRepository,
+            cartRepository,
+            orderRepository,
+            orderCocktailRepository,
+            cocktailSizePriceRepository
+        );
     }
 
     @Test
     void create_shouldCreateOrderAndClearCart() {
         // Arrange
         User user = new User(1L, "Ben", "ben@test.com", "pwd", CLIENT);
-        when(userRepository.findByEmail("ben@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("ben@test.com"))
+            .thenReturn(Optional.of(user));
 
         Order savedOrder = new Order(1L, user, LocalDateTime.now(), Order.Status.COMMANDEE);
-        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        when(orderRepository.save(any(Order.class)))
+            .thenReturn(savedOrder);
 
         Cocktail cocktail = new Cocktail(1L, "Mojito", "desc", "img.png", null);
         Size size = new Size(1L, "M");
         Cart cartItem = new Cart(1L, user, cocktail, size);
-        when(cartRepository.findByUser(user)).thenReturn(List.of(cartItem));
+        when(cartRepository.findByUser(user))
+            .thenReturn(List.of(cartItem));
 
-        OrderCocktail savedLine = new OrderCocktail(1L, savedOrder, cocktail, size, OrderCocktail.Step.PREPARATION);
-        when(orderCocktailRepository.save(any(OrderCocktail.class))).thenReturn(savedLine);
+        OrderCocktail savedLine = new OrderCocktail(
+            1L, savedOrder, cocktail, size, OrderCocktail.Step.PREPARATION
+        );
+        when(orderCocktailRepository.save(any(OrderCocktail.class)))
+            .thenReturn(savedLine);
 
         OrderRequest request = new OrderRequest();
+        // (si tu as d’autres champs dans OrderRequest, ajuste ici)
         request.setPanierId(1L);
 
         // Act
@@ -75,8 +97,12 @@ public class OrderServiceTest {
     void getByIdAndUserEmail_shouldThrowSecurityException_whenEmailMismatch() {
         User user = new User(1L, "Ben", "ben@test.com", "pwd", CLIENT);
         Order order = new Order(2L, user, LocalDateTime.now(), Order.Status.COMMANDEE);
-        when(orderRepository.findById(2L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(2L))
+            .thenReturn(Optional.of(order));
 
-        assertThrows(SecurityException.class, () -> orderService.getByIdAndUserEmail(2L, "other@test.com"));
+        assertThrows(
+            SecurityException.class,
+            () -> orderService.getByIdAndUserEmail(2L, "other@test.com")
+        );
     }
 }

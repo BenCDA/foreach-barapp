@@ -91,7 +91,7 @@ export const api = {
     options: RequestInit = {},
     requiresAuth = false
   ) => callApi<T>(endpoint, { method: 'DELETE', ...options }, requiresAuth),
-  
+
 
   patch: <T = unknown, B = unknown>(
     endpoint: string,

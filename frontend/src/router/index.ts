@@ -70,10 +70,16 @@ const routes: RouteRecordRaw[] = [
     component: Orders,
     meta: { requiresAuth: true, roles: [ROLE_CLIENT] }
   },
-
+  // La route manquante pour le détail d'une commande client :
+  {
+    path: '/orders/:id',
+    component: OrderDetail,
+    meta: { requiresAuth: true, roles: [ROLE_CLIENT] }
+  },
+  // Si tu veux garder une page d'avancement séparée :
   {
     path: '/orders/:id/avancement',
-    component: OrderProgress, // <--- nouvelle page de suivi
+    component: OrderProgress,
     meta: { requiresAuth: true, roles: [ROLE_CLIENT] }
   },
 

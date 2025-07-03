@@ -1,86 +1,76 @@
 <template>
   <div class="min-h-screen bg-gray-50 p-4 flex flex-col items-center">
-    <h1 class="text-3xl font-bold mb-6"
-        :class="isBarman ? 'text-teal-600' : 'text-green-600'">
-      {{ isBarman ? 'Commandes à traiter' : 'Mes commandes' }}
-    </h1>
-
+    <h1 class="text-4xl font-bold mb-10 text-green-600">Mes commandes</h1>
     <div v-if="loading" class="text-gray-500">Chargement…</div>
-
-    <ul v-else class="w-full max-w-2xl space-y-4">
+    <ul v-else class="w-full max-w-3xl space-y-8">
       <li
         v-for="o in orders"
-        :key="o.id"
-        class="bg-white rounded shadow p-4 flex flex-col md:flex-row md:justify-between md:items-center"
+        :key="o.orderId"
+        class="bg-white rounded-xl shadow p-6 flex flex-col items-center"
       >
-        <div class="flex-1">
-          <p><span class="font-semibold">Commande #{{ o.id }}</span></p>
-          <p class="text-sm text-gray-600 mb-2">
-            {{ isBarman ? o.clientEmail : formatStatus(o.status) }}
-          </p>
-          <!-- Progression de la commande -->
-          <OrderProgressBar :status="o.status" class="mb-2" />
+        <div class="w-full flex justify-between items-center mb-2">
+          <div>
+            <p class="text-2xl font-extrabold">
+              Commande <span class="text-teal-500">#{{ o.orderId }}</span>
+            </p>
+            <p class="text-base text-gray-600 mt-1 mb-1">
+              {{ formatStatus(o.status) }}
+            </p>
+          </div>
+          <button
+            @click="goDetail(o.orderId)"
+            class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-lg font-semibold"
+          >
+            Détails
+          </button>
         </div>
-        <button
-          @click="() => goDetail(o.id)"
-          class="self-end md:self-auto mt-3 md:mt-0 px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition text-sm"
-        >
-          Détails
-        </button>
+        <OrderProgressBar :status="o.status" />
       </li>
     </ul>
-
-    <div v-if="!loading && orders.length === 0" class="mt-4 text-red-500">
+    <div v-if="!loading && orders.length === 0" class="mt-8 text-red-500 text-lg">
       Aucune commande à afficher.
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../services/api'
 import OrderProgressBar from '../components/OrderProgressBar.vue'
 
 interface Order {
-  id: number
+  orderId: number
   status: string
-  clientEmail?: string
 }
 
 const router = useRouter()
 const loading = ref(true)
 const orders = ref<Order[]>([])
 
-// rôle
-const role = localStorage.getItem('role') || ''
-const isBarman = computed(() => role.includes('ROLE_BARMAN'))
-
 onMounted(async () => {
   try {
-    if (isBarman.value) {
-      orders.value = await api.get<Order[]>('/orders/to-treat', {}, true)
-    } else {
-      orders.value = await api.get<Order[]>('/orders/me', {}, true)
-    }
+    orders.value = await api.get<Order[]>('/orders/me', {}, true)
   } catch (e) {
-    console.error(e)
+    console.error('Erreur chargement commandes', e)
   } finally {
     loading.value = false
   }
 })
 
-function goDetail(id: number) {
-  router.push(`/orders/${id}`)
+function goDetail(orderId: number) {
+  router.push(`/orders/${orderId}`)
 }
 
 function formatStatus(s: string) {
-  // Adapte ici en fonction de tes statuts réels du back
-  switch (s) {
-    case 'COMMANDEE': return 'Commandée'
-    case 'EN_PREPARATION': return 'En préparation'
-    case 'TERMINEE': return 'Terminée'
-    default: return s
-  }
+  return {
+    COMMANDEE: 'Commandée',
+    EN_PREPARATION: 'En préparation',
+    TERMINEE: 'Terminée'
+  }[s] || s
 }
 </script>
+
+<style scoped>
+/* si nécessaire */
+</style>
